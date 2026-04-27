@@ -1,6 +1,8 @@
 import esbuild from "esbuild";
 import process from "process";
-import { builtinModules } from 'node:module';
+import path from "node:path";
+import { promises as fs } from "node:fs";
+import { builtinModules } from "node:module";
 
 const banner =
 `/*
@@ -9,41 +11,75 @@ if you want to view the source, please visit the github repository of this plugi
 */
 `;
 
-const prod = (process.argv[2] === "production");
+const prod = process.argv[2] === "production";
+
+async function getPluginOutDir() {
+    const manifestRaw = await fs.readFile("manifest.json", "utf8");
+    const manifest = JSON.parse(manifestRaw);
+    return path.join("sample_vault", ".obsidian", "plugins", manifest.id);
+}
+
+async function copyBuildArtifacts() {
+    const pluginOutDir = await getPluginOutDir();
+    await fs.mkdir(pluginOutDir, { recursive: true });
+
+    await fs.copyFile("main.js", path.join(pluginOutDir, "main.js"));
+    await fs.copyFile("manifest.json", path.join(pluginOutDir, "manifest.json"));
+
+    try {
+        await fs.copyFile("styles.css", path.join(pluginOutDir, "styles.css"));
+    } catch {
+        // styles.css is optional
+    }
+
+    console.log(`[copy] Artifacts copied to ${pluginOutDir}`);
+}
+
+const copyToSampleVaultPlugin = {
+    name: "copy-to-sample-vault",
+    setup(build) {
+        build.onEnd(async (result) => {
+            if (result.errors.length > 0) return;
+            await copyBuildArtifacts();
+        });
+    },
+};
 
 const context = await esbuild.context({
-	banner: {
-		js: banner,
-	},
-	entryPoints: ["src/main.ts"],
-	bundle: true,
-	external: [
-		"obsidian",
-		"electron",
-		"@codemirror/autocomplete",
-		"@codemirror/collab",
-		"@codemirror/commands",
-		"@codemirror/language",
-		"@codemirror/lint",
-		"@codemirror/search",
-		"@codemirror/state",
-		"@codemirror/view",
-		"@lezer/common",
-		"@lezer/highlight",
-		"@lezer/lr",
-		...builtinModules],
-	format: "cjs",
-	target: "es2018",
-	logLevel: "info",
-	sourcemap: prod ? false : "inline",
-	treeShaking: true,
-	outfile: "main.js",
-	minify: prod,
+    banner: {
+        js: banner,
+    },
+    entryPoints: ["src/main.ts"],
+    bundle: true,
+    external: [
+        "obsidian",
+        "electron",
+        "@codemirror/autocomplete",
+        "@codemirror/collab",
+        "@codemirror/commands",
+        "@codemirror/language",
+        "@codemirror/lint",
+        "@codemirror/search",
+        "@codemirror/state",
+        "@codemirror/view",
+        "@lezer/common",
+        "@lezer/highlight",
+        "@lezer/lr",
+        ...builtinModules,
+    ],
+    format: "cjs",
+    target: "es2018",
+    logLevel: "info",
+    sourcemap: prod ? false : "inline",
+    treeShaking: true,
+    outfile: "main.js",
+    minify: prod,
+    plugins: [copyToSampleVaultPlugin],
 });
 
 if (prod) {
-	await context.rebuild();
-	process.exit(0);
+    await context.rebuild();
+    process.exit(0);
 } else {
-	await context.watch();
+    await context.watch();
 }
