@@ -67,6 +67,7 @@ const context = await esbuild.context({
         "@lezer/lr",
         ...builtinModules,
     ],
+    jsx: "automatic",
     format: "cjs",
     target: "es2018",
     logLevel: "info",
