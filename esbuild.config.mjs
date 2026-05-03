@@ -32,7 +32,9 @@ async function copyBuildArtifacts() {
         // styles.css is optional
     }
 
-    console.log(`[copy] Artifacts copied to ${pluginOutDir}`);
+    // Generate timestamp in timezone +07:00
+    const now = new Date(Date.now() + 7 * 60 * 60 * 1000).toISOString().replace('Z', '+07:00');
+    console.log(`${now} - [copy] Artifacts copied to ${pluginOutDir}`);
 }
 
 const copyToSampleVaultPlugin = {
@@ -83,4 +85,5 @@ if (prod) {
     process.exit(0);
 } else {
     await context.watch();
+
 }

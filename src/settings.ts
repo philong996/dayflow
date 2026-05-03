@@ -7,13 +7,21 @@ export interface DayFlowSettings {
 	calendarStartHour: number;
 	calendarEndHour:   number;
 	defaultArea?:      string;
+	areaColors:        Record<string, string>;
 }
 
 export const DEFAULT_SETTINGS: DayFlowSettings = {
 	dailyNoteFolder:   '',
 	dailyNoteFormat:   'YYYY-MM-DD',
-	calendarStartHour: 6,
+	calendarStartHour: 0,
 	calendarEndHour:   23,
+	areaColors: {
+		Work:     '#3b82f6',
+		Personal: '#8b5cf6',
+		Learning: '#22c55e',
+		Health:   '#f97316',
+		Finance:  '#eab308',
+	},
 };
 
 export class DayFlowSettingTab extends PluginSettingTab {
@@ -82,5 +90,48 @@ export class DayFlowSettingTab extends PluginSettingTab {
 					this.plugin.settings.defaultArea = value.trim() || undefined;
 					await this.plugin.saveSettings();
 				}));
+
+		containerEl.createEl('h3', { text: 'Area colors' });
+		containerEl.createEl('p', { text: 'One color per area name. The name must match the heading/subpath used in your daily notes.', cls: 'setting-item-description' });
+
+		const renderAreaColors = () => {
+			areaColorContainer.empty();
+			for (const [name, color] of Object.entries(this.plugin.settings.areaColors)) {
+				new Setting(areaColorContainer)
+					.setName(name)
+					.addColorPicker(cp => cp
+						.setValue(color)
+						.onChange(async val => {
+							this.plugin.settings.areaColors[name] = val;
+							await this.plugin.saveSettings();
+						}))
+					.addExtraButton(btn => btn
+						.setIcon('trash')
+						.setTooltip('Remove')
+						.onClick(async () => {
+							delete this.plugin.settings.areaColors[name];
+							await this.plugin.saveSettings();
+							renderAreaColors();
+						}));
+			}
+
+			let newName = '';
+			new Setting(areaColorContainer)
+				.setName('Add area')
+				.addText(text => text
+					.setPlaceholder('Area name')
+					.onChange(val => { newName = val.trim(); }))
+				.addColorPicker(cp => cp
+					.setValue('#94a3b8')
+					.onChange(async val => {
+						if (!newName) return;
+						this.plugin.settings.areaColors[newName] = val;
+						await this.plugin.saveSettings();
+						renderAreaColors();
+					}));
+		};
+
+		const areaColorContainer = containerEl.createDiv();
+		renderAreaColors();
 	}
 }

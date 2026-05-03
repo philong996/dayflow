@@ -1,0 +1,173 @@
+@import "tailwindcss/theme.css";
+@import "tailwindcss/utilities.css";
+
+/* ── Calendar view shell ─────────────────────────────────────────────────── */
+
+.df-calendar {
+    @apply flex flex-col h-full overflow-hidden;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+
+.df-toolbar {
+    @apply flex items-center justify-between px-2.5 py-1.5 shrink-0 border-b border-[var(--background-modifier-border)];
+}
+
+.df-mode-toggle {
+    @apply flex gap-0.5;
+}
+
+.df-mode-btn {
+    @apply text-xs px-2 py-0.5 rounded border border-transparent cursor-pointer bg-transparent text-[var(--text-muted)];
+}
+
+.df-mode-btn:hover {
+    @apply bg-[var(--background-modifier-hover)] text-[var(--text-normal)];
+}
+
+.df-mode-btn.active {
+    @apply bg-[var(--interactive-accent)] text-[var(--text-on-accent)];
+}
+
+.df-nav {
+    @apply flex items-center gap-2;
+}
+
+.df-nav button {
+    @apply bg-transparent border-none text-[var(--text-muted)] cursor-pointer text-base px-1.5 py-0.5 rounded;
+}
+
+.df-nav button:hover {
+    @apply bg-[var(--background-modifier-hover)] text-[var(--text-normal)];
+}
+
+.df-current-date {
+    @apply text-sm text-[var(--text-normal)] min-w-28 text-center;
+}
+
+.df-refresh-btn {
+    @apply text-base leading-none;
+}
+
+/* ── Day wrapper + header ────────────────────────────────────────────────── */
+
+.df-day-wrapper {
+    @apply flex flex-col flex-1 min-h-0;
+}
+
+.df-day-header {
+    @apply flex items-baseline justify-between px-3 py-1.5 shrink-0 border-b border-[var(--background-modifier-border)];
+}
+
+.df-day-title {
+    @apply text-sm font-semibold text-[var(--text-normal)];
+}
+
+.df-day-total {
+    @apply text-xs text-[var(--text-muted)];
+}
+
+/* ── Day grid ────────────────────────────────────────────────────────────── */
+
+.df-day-grid {
+    @apply flex flex-1 overflow-y-auto min-h-0;
+}
+
+.df-hour-track {
+    @apply relative w-11 shrink-0 border-r border-[var(--background-modifier-border)];
+}
+
+.df-hour-label {
+    @apply absolute right-1.5 text-[0.68rem] text-[var(--text-muted)] select-none leading-none;
+}
+
+.df-day-column {
+    @apply relative flex-1;
+}
+
+.df-hour-divider {
+    @apply absolute left-0 right-0 h-px bg-[var(--background-modifier-border)];
+}
+
+.df-half-divider {
+    @apply absolute left-0 right-0 h-px border-t border-dashed border-[var(--background-modifier-border)] opacity-50;
+}
+
+/* ── Now indicator ───────────────────────────────────────────────────────── */
+
+.df-now-dot {
+    @apply absolute right-0 w-2 h-2 rounded-full bg-red-500 -translate-y-1/2 z-10;
+}
+
+.df-now-line {
+    @apply absolute left-0 right-0 h-px bg-red-500 z-10;
+}
+
+/* ── Time block ──────────────────────────────────────────────────────────── */
+
+.df-time-block {
+    @apply absolute left-2 right-2 px-1.5 py-0.5 rounded overflow-hidden flex flex-col
+           text-xs cursor-default border-l-[3px] border-solid;
+}
+
+.df-time-block:hover {
+    @apply brightness-95;
+}
+
+.df-block-time {
+    @apply text-[0.65rem] opacity-70 leading-tight mb-0.5 truncate;
+}
+
+.df-block-task {
+    @apply text-[0.75rem] font-semibold truncate leading-tight;
+}
+
+.df-block-subtask {
+    @apply text-[0.65rem] opacity-80 truncate leading-tight;
+}
+
+/* ── Tooltip ─────────────────────────────────────────────────────────────── */
+
+.df-tooltip {
+    @apply fixed z-50 w-60 rounded-lg shadow-lg p-3 pointer-events-none
+           bg-[var(--background-primary)] border border-[var(--background-modifier-border)]
+           text-[var(--text-normal)] text-xs;
+}
+
+.df-tooltip-task {
+    @apply text-sm font-semibold leading-snug;
+}
+
+.df-tooltip-subtask {
+    @apply text-xs text-[var(--text-muted)] mt-0.5;
+}
+
+.df-tooltip-time {
+    @apply text-[0.7rem] text-[var(--text-muted)] mt-1.5;
+}
+
+.df-tooltip-badges {
+    @apply flex flex-wrap gap-1 mt-1.5;
+}
+
+.df-tooltip-badge {
+    @apply text-[0.65rem] font-medium px-1.5 py-0.5 rounded-full;
+}
+
+.df-tooltip-badge-project {
+    @apply bg-[#ede9fe] text-[#7c3aed];
+}
+
+.df-tooltip-divider {
+    @apply border-t border-[var(--background-modifier-border)] my-2;
+}
+
+.df-tooltip-desc {
+    @apply text-[0.7rem] text-[var(--text-muted)] leading-relaxed;
+}
+
+/* ── Placeholder (weekly / monthly stubs) ────────────────────────────────── */
+
+.df-placeholder {
+    @apply flex flex-1 items-center justify-center text-[var(--text-muted)] text-sm;
+}
