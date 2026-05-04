@@ -32,10 +32,11 @@ describe('EntryParser.parseEntry', () => {
 		expect(entry!.end).toBe('10:30');
 		expect(entry!.duration.toObject()).toEqual({ hours: 1, minutes: 30 });
 		expect(entry!.task).toBe('DayFlow');
-		expect(entry!.subTask).toBe('');
+		expect(entry!.subTask).toBeUndefined();
 		expect(entry!.description).toBe('Implement parser');
 		expect(entry!.area.markdown()).toBe('[[2026#Career]]');
 		expect(entry!.project).toBeUndefined();
+		expect(entry!.type).toBe('tracked');
 	});
 
 	it('parses three body segments into task, subTask, description', () => {
@@ -45,6 +46,43 @@ describe('EntryParser.parseEntry', () => {
 		expect(entry!.task).toBe('Deep work');
 		expect(entry!.subTask).toBe('Backend');
 		expect(entry!.description).toBe('Implement parser');
+		expect(entry!.type).toBe('tracked');
+	});
+
+	it('parses a planned entry with type:: planned', () => {
+		const pos = { line: 0, start: 0, startValue: 0, end: 0 };
+		const area = Link.header('2026', 'Career');
+		const item = makeItem({
+			$text: '10:00 - 11:00 (duration:: 1h 0m): Plan feature | Backend (area:: [[2026#Career]]) (type:: planned) ^abc123',
+			$infields: {
+				duration: { key: 'duration', raw: '1h 0m', value: Duration.fromObject({ hours: 1 }), position: pos },
+				area:     { key: 'area', raw: '[[2026#Career]]', value: area, position: pos },
+				type:     { key: 'type', raw: 'planned', value: 'planned', position: pos },
+			},
+		});
+		const entry = parser.parseEntry(item);
+		expect(entry!.type).toBe('planned');
+		expect(entry!.task).toBe('Plan feature');
+		expect(entry!.subTask).toBe('Backend');
+		expect(entry!.description).toBeUndefined();
+	});
+
+	it('parses a planned entry with no subTask', () => {
+		const pos = { line: 0, start: 0, startValue: 0, end: 0 };
+		const area = Link.header('2026', 'Career');
+		const item = makeItem({
+			$text: '10:00 - 11:00 (duration:: 1h 0m): Plan feature (area:: [[2026#Career]]) (type:: planned) ^abc123',
+			$infields: {
+				duration: { key: 'duration', raw: '1h 0m', value: Duration.fromObject({ hours: 1 }), position: pos },
+				area:     { key: 'area', raw: '[[2026#Career]]', value: area, position: pos },
+				type:     { key: 'type', raw: 'planned', value: 'planned', position: pos },
+			},
+		});
+		const entry = parser.parseEntry(item);
+		expect(entry!.type).toBe('planned');
+		expect(entry!.task).toBe('Plan feature');
+		expect(entry!.subTask).toBeUndefined();
+		expect(entry!.description).toBeUndefined();
 	});
 
 	it('includes project when present and valid', () => {

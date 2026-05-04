@@ -83,8 +83,8 @@ function CalendarRoot({ extractor, initialView, saveView, calendarStartHour, cal
 
 	const { startDate, endDate } = renderer.getDateRange(viewState.currentDate);
 	const entries = useMemo(
-		() => extractor.fetchTrackedEntries(startDate, endDate),
-		[revision, startDate, endDate],
+		() => extractor.fetchEntries(startDate, endDate, viewState.mode === 'daily' ? 'all' : 'tracked'),
+		[revision, startDate, endDate, viewState.mode],
 	);
 
 	const handleChange = (next: CalendarViewState) => {

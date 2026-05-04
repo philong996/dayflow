@@ -27,20 +27,23 @@ export function DayGrid({ entries, startHour, endHour, currentDate, areaColors }
 		return () => clearInterval(id);
 	}, []);
 
-	const totalMinutes  = (endHour - startHour) * 60;
-	const columnHeight  = (endHour - startHour) * PX_PER_HOUR;
-	const hours         = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
+	const totalMinutes = (endHour - startHour) * 60;
+	const columnHeight = (endHour - startHour) * PX_PER_HOUR;
+	const hours        = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
+
+	const tracked = entries.filter(e => e.type === 'tracked');
+	const planned = entries.filter(e => e.type === 'planned');
 
 	// "now" indicator — only when viewing today and within visible range
-	const isToday  = currentDate === DateTime.now().toISODate();
+	const isToday    = currentDate === DateTime.now().toISODate();
 	const nowInRange = isToday && now.hour >= startHour && now.hour < endHour;
-	const nowMins  = nowInRange ? (now.hour - startHour) * 60 + now.minute : null;
-	const nowPct   = nowMins !== null ? (nowMins / totalMinutes) * 100 : null;
+	const nowMins    = nowInRange ? (now.hour - startHour) * 60 + now.minute : null;
+	const nowPct     = nowMins !== null ? (nowMins / totalMinutes) * 100 : null;
 
 	// Header
 	const dayTitle   = DateTime.fromISO(currentDate).toFormat('yyyy-MM-dd');
-	const totalTime  = entries.reduce((s, e) => s.plus(e.duration), Duration.fromMillis(0));
-	const totalLabel = entries.length > 0 ? `${formatDuration(totalTime)} tracked` : '';
+	const totalTime  = tracked.reduce((s, e) => s.plus(e.duration), Duration.fromMillis(0));
+	const totalLabel = tracked.length > 0 ? `${formatDuration(totalTime)} tracked` : '';
 
 	return (
 		<div className="df-day-wrapper">
@@ -62,30 +65,52 @@ export function DayGrid({ entries, startHour, endHour, currentDate, areaColors }
 						<div className="df-now-dot" style={{ top: `${nowPct}%` }} />
 					)}
 				</div>
-				<div className="df-day-column" style={{ height: columnHeight }}>
-					{hours.map(h => {
-						const pct     = ((h - startHour) / (endHour - startHour)) * 100;
-						const halfPct = ((h - startHour + 0.5) / (endHour - startHour)) * 100;
-						return (
-							<Fragment key={h}>
-							<div className="df-hour-divider" style={{ top: `${pct}%` }} />
-							<div className="df-half-divider" style={{ top: `${halfPct}%` }} />
-						</Fragment>
-						);
-					})}
-					{nowPct !== null && (
-						<div className="df-now-line" style={{ top: `${nowPct}%` }} />
+
+				<div className="df-columns-area" style={{ height: columnHeight }}>
+					{/* Shared dividers spanning all columns */}
+					<div className="df-dividers-overlay">
+						{hours.map(h => {
+							const pct     = ((h - startHour) / (endHour - startHour)) * 100;
+							const halfPct = ((h - startHour + 0.5) / (endHour - startHour)) * 100;
+							return (
+								<Fragment key={h}>
+									<div className="df-hour-divider" style={{ top: `${pct}%` }} />
+									<div className="df-half-divider" style={{ top: `${halfPct}%` }} />
+								</Fragment>
+							);
+						})}
+						{nowPct !== null && (
+							<div className="df-now-line" style={{ top: `${nowPct}%` }} />
+						)}
+					</div>
+
+					<div className="df-day-column">
+						{tracked.map(entry => (
+							<TimeBlock
+								key={entry.id}
+								entry={entry}
+								startHour={startHour}
+								totalMinutes={totalMinutes}
+								pxPerHour={PX_PER_HOUR}
+								areaColors={areaColors}
+							/>
+						))}
+					</div>
+
+					{planned.length > 0 && (
+						<div className="df-day-column df-day-column--planned">
+							{planned.map(entry => (
+								<TimeBlock
+									key={entry.id}
+									entry={entry}
+									startHour={startHour}
+									totalMinutes={totalMinutes}
+									pxPerHour={PX_PER_HOUR}
+									areaColors={areaColors}
+								/>
+							))}
+						</div>
 					)}
-					{entries.map(entry => (
-						<TimeBlock
-							key={entry.id}
-							entry={entry}
-							startHour={startHour}
-							totalMinutes={totalMinutes}
-							pxPerHour={PX_PER_HOUR}
-							areaColors={areaColors}
-						/>
-					))}
 				</div>
 			</div>
 		</div>

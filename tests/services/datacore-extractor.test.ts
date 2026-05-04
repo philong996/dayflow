@@ -13,14 +13,14 @@ function makeSettings(overrides: Partial<DayFlowSettings> = {}): DayFlowSettings
 }
 
 // Access the private method via casting for unit testing query shape.
-function buildQuery(settings: DayFlowSettings, startDate: string, endDate: string): string {
+function buildQuery(settings: DayFlowSettings, startDate: string, endDate: string, type: 'tracked' | 'planned' | 'all' = 'tracked'): string {
 	const extractor = new DatacoreExtractor({} as any, settings);
-	return (extractor as any).trackedEntriesQuery(startDate, endDate) as string;
+	return (extractor as any).buildEntriesQuery(startDate, endDate, type) as string;
 }
 
-// ─── trackedEntriesQuery ──────────────────────────────────────────────────────
+// ─── buildEntriesQuery ────────────────────────────────────────────────────────
 
-describe('DatacoreExtractor.trackedEntriesQuery', () => {
+describe('DatacoreExtractor.buildEntriesQuery', () => {
 	it('produces a date range query using dailyNoteFolder from settings', () => {
 		const q = buildQuery(makeSettings({ dailyNoteFolder: 'Journal/Daily' }), '2026-04-28', '2026-05-04');
 		expect(q).toContain('path("Journal/Daily")');
@@ -38,5 +38,21 @@ describe('DatacoreExtractor.trackedEntriesQuery', () => {
 		const q = buildQuery(makeSettings({ dailyNoteFolder: '' }), '2026-04-28', '2026-05-04');
 		expect(q).not.toContain('path(');
 		expect(q).toContain('$name >= "2026-04-28"');
+	});
+
+	it('adds not exists(type) clause for tracked', () => {
+		const q = buildQuery(makeSettings(), '2026-05-04', '2026-05-04', 'tracked');
+		expect(q).toContain('not exists(type)');
+	});
+
+	it('adds type = "planned" clause for planned', () => {
+		const q = buildQuery(makeSettings(), '2026-05-04', '2026-05-04', 'planned');
+		expect(q).toContain('type = "planned"');
+	});
+
+	it('adds no type clause for all', () => {
+		const q = buildQuery(makeSettings(), '2026-05-04', '2026-05-04', 'all');
+		expect(q).not.toContain('not exists(type)');
+		expect(q).not.toContain('type = "planned"');
 	});
 });

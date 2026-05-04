@@ -81,8 +81,20 @@
     @apply absolute right-1.5 text-[0.68rem] text-[var(--text-muted)] select-none leading-none;
 }
 
+.df-columns-area {
+    @apply relative flex flex-1;
+}
+
+.df-dividers-overlay {
+    @apply absolute inset-0 pointer-events-none;
+}
+
 .df-day-column {
     @apply relative flex-1;
+}
+
+.df-day-column--planned {
+    @apply border-l border-dashed border-[var(--background-modifier-border)];
 }
 
 .df-hour-divider {

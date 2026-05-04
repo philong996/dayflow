@@ -14,17 +14,23 @@ export class DailyNoteWriter {
 }
 
 export function serializeEntry(entry: TimeEntry): string {
-	const body = entry.subTask
-		? `${entry.task} | ${entry.subTask} | ${entry.description}`
-		: `${entry.task} | ${entry.description}`;
+	let body: string;
+	if (entry.type === 'planned') {
+		body = entry.subTask ? `${entry.task} | ${entry.subTask}` : entry.task;
+	} else {
+		body = entry.subTask
+			? `${entry.task} | ${entry.subTask} | ${entry.description ?? ''}`
+			: `${entry.task} | ${entry.description ?? ''}`;
+	}
 
-	const area    = `(area:: ${entry.area.markdown()})`;
-	const project = entry.project ? ` (project:: ${entry.project.markdown()})` : '';
+	const area      = `(area:: ${entry.area.markdown()})`;
+	const project   = entry.project ? ` (project:: ${entry.project.markdown()})` : '';
+	const typeField = entry.type === 'planned' ? ' (type:: planned)' : '';
 
 	const { hours = 0, minutes = 0 } = entry.duration.shiftTo('hours', 'minutes').toObject();
 	const duration = `${hours}h ${minutes}m`;
 
-	return `- ${entry.start} - ${entry.end} (duration:: ${duration}): ${body} ${area}${project} ^${entry.id}`;
+	return `- ${entry.start} - ${entry.end} (duration:: ${duration}): ${body} ${area}${project}${typeField} ^${entry.id}`;
 }
 
 export function upsertEntry(content: string, entry: TimeEntry): string {

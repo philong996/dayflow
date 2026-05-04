@@ -10,15 +10,15 @@ export class DatacoreExtractor {
 		private readonly settings: { dailyNoteFolder: string },
 	) {}
 
-	fetchTrackedEntries(startDate: string, endDate: string): TimeEntry[] {
-		const query = this.trackedEntriesQuery(startDate, endDate);
+	fetchEntries(startDate: string, endDate: string, type: 'tracked' | 'planned' | 'all' = 'tracked'): TimeEntry[] {
+		const query = this.buildEntriesQuery(startDate, endDate, type);
 		const blocks = this.api.query(query).filter(
 			(b): b is MarkdownListItem => b !== null && typeof b === 'object',
 		);
 		return this.parser.parseAllEntries(blocks);
 	}
 
-	private trackedEntriesQuery(startDate: string, endDate: string): string {
+	private buildEntriesQuery(startDate: string, endDate: string, type: 'tracked' | 'planned' | 'all'): string {
 		const folder = this.settings.dailyNoteFolder;
 		const dateClause = startDate === endDate
 			? `$name = "${startDate}"`
@@ -26,6 +26,11 @@ export class DatacoreExtractor {
 		const inner = folder
 			? `path("${folder}")\n      and ${dateClause}`
 			: dateClause;
-		return `@list-item\n  and exists(duration)\n  and childof(\n      ${inner}\n  )`;
+		const typeClause = type === 'tracked'
+			? '\n  and not exists(type)'
+			: type === 'planned'
+				? '\n  and type = "planned"'
+				: '';
+		return `@list-item\n  and exists(duration)${typeClause}\n  and childof(\n      ${inner}\n  )`;
 	}
 }

@@ -20,6 +20,7 @@ function makeEntry(overrides: Partial<TimeEntry> = {}): TimeEntry {
 		task:        'Write parser',
 		description: 'Implemented the entry parser',
 		area,
+		type:        'tracked',
 		...overrides,
 	};
 }
@@ -56,6 +57,25 @@ describe('serializeEntry', () => {
 	it('ends with the block id', () => {
 		const result = serializeEntry(makeEntry({ id: 'xyz999' }));
 		expect(result.endsWith('^xyz999')).toBe(true);
+	});
+
+	it('serializes a planned entry with (type:: planned) and no description', () => {
+		const result = serializeEntry(makeEntry({ type: 'planned', description: undefined }));
+		expect(result).toContain('(type:: planned)');
+		expect(result).not.toContain('undefined');
+		expect(result).toContain('Write parser');
+	});
+
+	it('serializes a planned entry with subTask and no description', () => {
+		const result = serializeEntry(makeEntry({ type: 'planned', subTask: 'Backend', description: undefined }));
+		expect(result).toContain('Write parser | Backend');
+		expect(result).toContain('(type:: planned)');
+		expect(result).not.toContain('undefined');
+	});
+
+	it('does not include (type:: planned) for tracked entries', () => {
+		const result = serializeEntry(makeEntry());
+		expect(result).not.toContain('type::');
 	});
 });
 

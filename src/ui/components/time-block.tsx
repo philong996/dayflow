@@ -80,13 +80,15 @@ export function TimeBlock({ entry, startHour, totalMinutes, pxPerHour, areaColor
 	return (
 		<>
 			<div
-				className="df-time-block"
+				className={`df-time-block${entry.type === 'planned' ? ' df-time-block--planned' : ''}`}
 				style={{
 					top:             `${top}%`,
 					height:          `calc(${height}% - 2px)`,
 					backgroundColor: colors.blockBg,
-					borderColor: colors.border,
+					borderColor:     colors.border,
 					color:           colors.blockText,
+					opacity:         entry.type === 'planned' ? 0.75 : 1,
+					borderStyle:     entry.type === 'planned' ? 'dashed' : 'solid',
 				}}
 				onMouseMove={(e) => setTooltipPos({ x: e.clientX + 12, y: e.clientY + 12 })}
 				onMouseLeave={() => setTooltipPos(null)}

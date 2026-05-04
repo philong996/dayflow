@@ -26,16 +26,15 @@ export class EntryParser {
 		if (!id) return null;
 
 		const timeMatch = item.$text?.match(/(\d{2}:\d{2}) - (\d{2}:\d{2}) \(duration:: .*?\): (.*?)(?= \()/);
-		const start = timeMatch?.[1] ?? null;
-		const end   = timeMatch?.[2] ?? null;
-		if (!start || !end) return null;
+		if (!timeMatch) return null;
+		const start = timeMatch[1];
+		const end   = timeMatch[2];
+		const body  = timeMatch[3];
+		if (!start || !end || !body) return null;
 
-		if (!timeMatch || timeMatch[3] === undefined) return null;
-		const parts = timeMatch[3].split('|').map(s => s.trim());
-		const task  = parts[0] ?? null;
+		const parts = body.split('|').map(s => s.trim());
+		const task  = parts[0];
 		if (!task) return null;
-		const subTask     = parts[1] ?? '';
-		const description = parts[2] ?? '';
 
 		const duration = item.$infields['duration']?.value;
 		if (duration === undefined || !Duration.isDuration(duration)) return null;
@@ -46,6 +45,21 @@ export class EntryParser {
 		const rawProject = item.$infields['project']?.value;
 		const project = isLink(rawProject) ? rawProject : undefined;
 
-		return { id, start, end, duration, task, subTask, description, area: rawArea, project };
+		const type = item.$infields['type']?.value === 'planned' ? 'planned' : 'tracked';
+
+		let subTask: string | undefined;
+		let description: string | undefined;
+		if (type === 'planned') {
+			subTask = parts[1] || undefined;
+		} else {
+			if (parts.length >= 3) {
+				subTask     = parts[1] || undefined;
+				description = parts[2];
+			} else {
+				description = parts[1] ?? '';
+			}
+		}
+
+		return { id, start, end, duration, task, subTask, description, area: rawArea, project, type };
 	}
 }
