@@ -9,7 +9,7 @@ vertical timeline.
 
 ## Code Structure
 
-**`src/domain/`** — Pure logic with no Obsidian UI dependency. Defines the `TimeEntry` data model,
+**`src/core/`** — Pure logic with no Obsidian UI dependency. Defines the `TimeEntry` data model,
 serializes entries to and from the inline-field format used in daily notes, and resolves daily note
 file paths.
 
@@ -22,7 +22,7 @@ and planned entries on a time grid with daily, weekly, and monthly modes. The ti
 the start/stop form.
 
 **`src/settings.ts` + `src/main.ts`** — User preferences and plugin wiring. `main.ts` composes the
-domain, service, and view objects and registers commands; no feature logic lives here.
+core, service, and view objects and registers commands; no feature logic lives here.
 
 ---
 

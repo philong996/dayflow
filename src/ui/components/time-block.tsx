@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Duration } from 'luxon';
-import type { TimeEntry } from '../../domain/time-entry';
+import type { TimeEntry } from '../../core/time-entry';
 
 
 // ─── Area colors ─────────────────────────────────────────────────────────
@@ -88,7 +88,6 @@ export function TimeBlock({ entry, startHour, totalMinutes, pxPerHour, areaColor
 					borderColor:     colors.border,
 					color:           colors.blockText,
 					opacity:         entry.type === 'planned' ? 0.75 : 1,
-					borderStyle:     entry.type === 'planned' ? 'dashed' : 'solid',
 				}}
 				onMouseMove={(e) => setTooltipPos({ x: e.clientX + 12, y: e.clientY + 12 })}
 				onMouseLeave={() => setTooltipPos(null)}

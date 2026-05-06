@@ -27,6 +27,7 @@
 		"globals": "14.0.0",
 		"jiti": "2.6.1",
 		"obsidian": "^1.12.3",
+		"obsidian-daily-notes-interface": "^0.9.4",
 		"tailwindcss": "^4.2.4",
 		"tslib": "2.4.0",
 		"typescript": "^5.8.3",

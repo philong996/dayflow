@@ -1,8 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Duration } from 'luxon';
-import { serializeEntry, upsertEntry } from '../../src/domain/daily-note-writer';
-import type { TimeEntry } from '../../src/domain/time-entry';
+import { serializeEntry, upsertEntry, DailyNoteWriter } from '../../src/core/daily-note-writer';
+import type { TimeEntry } from '../../src/core/time-entry';
 import type { Link } from '@blacksmithgu/datacore';
+import {
+	appHasDailyNotesPluginLoaded,
+	getAllDailyNotes,
+	getDailyNote,
+	createDailyNote,
+} from 'obsidian-daily-notes-interface';
 
 function link(markdown: string): Link {
 	return { markdown: () => markdown } as unknown as Link;
@@ -24,6 +30,8 @@ function makeEntry(overrides: Partial<TimeEntry> = {}): TimeEntry {
 		...overrides,
 	};
 }
+
+// ─── serializeEntry ───────────────────────────────────────────────────────────
 
 describe('serializeEntry', () => {
 	it('produces the correct list item format', () => {
@@ -79,6 +87,8 @@ describe('serializeEntry', () => {
 	});
 });
 
+// ─── upsertEntry ──────────────────────────────────────────────────────────────
+
 describe('upsertEntry', () => {
 	it('creates # Logs section when absent', () => {
 		const result = upsertEntry('# Journal\n\nSome notes.', makeEntry());
@@ -112,5 +122,57 @@ describe('upsertEntry', () => {
 		const content = '# Daily Note\n\nSome prose.\n\n# Logs\n\n';
 		const result = upsertEntry(content, makeEntry());
 		expect(result.startsWith('# Daily Note\n\nSome prose.')).toBe(true);
+	});
+});
+
+// ─── writeEntryForDate ────────────────────────────────────────────────────────
+
+describe('DailyNoteWriter.writeEntryForDate', () => {
+	const mockRead   = vi.fn().mockResolvedValue('');
+	const mockModify = vi.fn().mockResolvedValue(undefined);
+	const mockApp    = { vault: { read: mockRead, modify: mockModify } } as any;
+	const mockMoment = vi.fn().mockReturnValue({});
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.stubGlobal('moment', mockMoment);
+	});
+
+	it('shows a notice and returns early when Daily Notes plugin is not loaded', async () => {
+		vi.mocked(appHasDailyNotesPluginLoaded).mockReturnValue(false);
+		const writer = new DailyNoteWriter(mockApp);
+		await writer.writeEntryForDate(makeEntry(), '2026-05-06');
+		expect(mockRead).not.toHaveBeenCalled();
+	});
+
+	it('uses the existing note when found', async () => {
+		const mockFile = { path: '2026-05-06.md' };
+		vi.mocked(appHasDailyNotesPluginLoaded).mockReturnValue(true);
+		vi.mocked(getDailyNote).mockReturnValue(mockFile as any);
+		const writer = new DailyNoteWriter(mockApp);
+		await writer.writeEntryForDate(makeEntry(), '2026-05-06');
+		expect(createDailyNote).not.toHaveBeenCalled();
+		expect(mockRead).toHaveBeenCalledWith(mockFile);
+	});
+
+	it('creates a new note when not found', async () => {
+		const mockFile = { path: '2026-05-06.md' };
+		vi.mocked(appHasDailyNotesPluginLoaded).mockReturnValue(true);
+		vi.mocked(getDailyNote).mockReturnValue(null as any);
+		vi.mocked(createDailyNote).mockResolvedValue(mockFile as any);
+		const writer = new DailyNoteWriter(mockApp);
+		await writer.writeEntryForDate(makeEntry(), '2026-05-06');
+		expect(createDailyNote).toHaveBeenCalled();
+		expect(mockRead).toHaveBeenCalledWith(mockFile);
+	});
+
+	it('calls getAllDailyNotes to pass the note map to getDailyNote', async () => {
+		const noteMap = { '2026-05-06': { path: '2026-05-06.md' } };
+		vi.mocked(appHasDailyNotesPluginLoaded).mockReturnValue(true);
+		vi.mocked(getAllDailyNotes).mockReturnValue(noteMap as any);
+		vi.mocked(getDailyNote).mockReturnValue(noteMap['2026-05-06'] as any);
+		const writer = new DailyNoteWriter(mockApp);
+		await writer.writeEntryForDate(makeEntry(), '2026-05-06');
+		expect(getDailyNote).toHaveBeenCalledWith(expect.anything(), noteMap);
 	});
 });

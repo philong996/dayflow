@@ -1,4 +1,11 @@
-import { App, TFile } from 'obsidian';
+import { App, Notice, TFile } from 'obsidian';
+import {
+	appHasDailyNotesPluginLoaded,
+	createDailyNote,
+	getAllDailyNotes,
+	getDailyNote,
+} from 'obsidian-daily-notes-interface';
+import type { Moment } from 'moment';
 import { TimeEntry } from './time-entry';
 
 const LOGS_HEADING = '# Logs';
@@ -10,6 +17,16 @@ export class DailyNoteWriter {
 		const content = await this.app.vault.read(file);
 		const updated = upsertEntry(content, entry);
 		await this.app.vault.modify(file, updated);
+	}
+
+	async writeEntryForDate(entry: TimeEntry, date: string): Promise<void> {
+		if (!appHasDailyNotesPluginLoaded()) {
+			new Notice('DayFlow: Daily Notes plugin is not enabled.');
+			return;
+		}
+		const moment: Moment = (globalThis as any).moment(date, 'YYYY-MM-DD');
+		const file = getDailyNote(moment, getAllDailyNotes()) ?? await createDailyNote(moment);
+		await this.writeEntry(file, entry);
 	}
 }
 

@@ -1,15 +1,16 @@
 import type { ReactElement } from 'react';
-import type { TimeEntry } from '../../domain/time-entry';
+import type { TimeEntry } from '../../core/time-entry';
 import type { CalendarViewOptions } from '../calendar-types';
 
 export interface CalendarRendererProps {
-	entries:    TimeEntry[];
-	startDate:  string;
-	endDate:    string;
-	startHour:  number;
-	endHour:    number;
-	options:    CalendarViewOptions;
-	areaColors: Record<string, string>;
+	entries:      TimeEntry[];
+	startDate:    string;
+	endDate:      string;
+	startHour:    number;
+	endHour:      number;
+	options:      CalendarViewOptions;
+	areaColors:   Record<string, string>;
+	onSlotClick?: (date: string, time: string) => void;
 }
 
 export abstract class CalendarRenderer {

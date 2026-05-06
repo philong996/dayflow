@@ -183,3 +183,69 @@
 .df-placeholder {
     @apply flex flex-1 items-center justify-center text-[var(--text-muted)] text-sm;
 }
+
+/* ── Plan form ───────────────────────────────────────────────────────────── */
+
+.df-plan-overlay {
+    @apply fixed inset-0 z-[100] flex items-center justify-center;
+    background-color: rgba(0, 0, 0, 0.35);
+}
+
+.df-plan-form {
+    @apply rounded-lg border border-[var(--background-modifier-border)] bg-[var(--background-primary)] p-5 w-80;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+}
+
+.df-plan-form-header {
+    @apply flex items-center justify-between mb-4;
+}
+
+.df-plan-form-title {
+    @apply text-sm font-semibold text-[var(--text-normal)];
+}
+
+.df-plan-close {
+    @apply border-none bg-transparent cursor-pointer text-[var(--text-muted)] text-base leading-none px-1.5 py-0.5 rounded;
+}
+
+.df-plan-close:hover {
+    @apply text-[var(--text-normal)] bg-[var(--background-modifier-hover)];
+}
+
+.df-plan-row {
+    @apply flex items-center gap-2 mb-2.5;
+}
+
+.df-plan-label {
+    @apply w-[60px] shrink-0 text-xs text-[var(--text-muted)] text-right;
+}
+
+.df-plan-input {
+    @apply flex-1 min-w-0 rounded border border-[var(--background-modifier-border)]
+           bg-[var(--background-modifier-form-field)] px-2 py-1 text-sm text-[var(--text-normal)] outline-none;
+}
+
+.df-plan-input:focus {
+    @apply border-[var(--interactive-accent)];
+}
+
+.df-plan-actions {
+    @apply flex justify-end gap-2 mt-4;
+}
+
+.df-plan-btn {
+    @apply cursor-pointer rounded border border-[var(--background-modifier-border)]
+           bg-transparent px-3.5 py-1 text-xs text-[var(--text-muted)];
+}
+
+.df-plan-btn:hover {
+    @apply bg-[var(--background-modifier-hover)] text-[var(--text-normal)];
+}
+
+.df-plan-btn--primary {
+    @apply bg-[var(--interactive-accent)] border-[var(--interactive-accent)] text-[var(--text-on-accent)];
+}
+
+.df-plan-btn--primary:hover {
+    @apply bg-[var(--interactive-accent-hover)] border-[var(--interactive-accent-hover)];
+}

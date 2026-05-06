@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Duration } from 'luxon';
 import { Link } from '@blacksmithgu/datacore';
 import type { MarkdownListItem } from '@blacksmithgu/datacore';
-import { EntryParser } from '../../src/domain/entry-parser';
+import { EntryParser } from '../../src/core/entry-parser';
 
 const parser = new EntryParser();
 

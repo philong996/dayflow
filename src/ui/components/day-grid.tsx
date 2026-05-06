@@ -1,7 +1,7 @@
 import { useState, useEffect, Fragment } from 'react';
 import { DateTime, Duration } from 'luxon';
 import { TimeBlock, formatDuration } from './time-block';
-import type { TimeEntry } from '../../domain/time-entry';
+import type { TimeEntry } from '../../core/time-entry';
 
 export const PX_PER_HOUR = 56;
 
@@ -12,14 +12,15 @@ function hourLabel(h: number): string {
 }
 
 interface DayGridProps {
-	entries:     TimeEntry[];
-	startHour:   number;
-	endHour:     number;
-	currentDate: string;
-	areaColors:  Record<string, string>;
+	entries:      TimeEntry[];
+	startHour:    number;
+	endHour:      number;
+	currentDate:  string;
+	areaColors:   Record<string, string>;
+	onSlotClick?: (time: string) => void;
 }
 
-export function DayGrid({ entries, startHour, endHour, currentDate, areaColors }: DayGridProps) {
+export function DayGrid({ entries, startHour, endHour, currentDate, areaColors, onSlotClick }: DayGridProps) {
 	const [now, setNow] = useState(() => DateTime.now());
 
 	useEffect(() => {
@@ -66,7 +67,21 @@ export function DayGrid({ entries, startHour, endHour, currentDate, areaColors }
 					)}
 				</div>
 
-				<div className="df-columns-area" style={{ height: columnHeight }}>
+				<div
+					className="df-columns-area"
+					style={{ height: columnHeight }}
+					onClick={onSlotClick ? (e) => {
+						if ((e.target as HTMLElement).closest('.df-time-block')) return;
+						const rect = e.currentTarget.getBoundingClientRect();
+						const y = e.clientY - rect.top;
+						const rawMins = (y / columnHeight) * totalMinutes;
+						const snapped = Math.round(rawMins / 15) * 15;
+						const abs = startHour * 60 + Math.max(0, Math.min(snapped, totalMinutes - 15));
+						const hh = String(Math.floor(abs / 60)).padStart(2, '0');
+						const mm = String(abs % 60).padStart(2, '0');
+						onSlotClick(`${hh}:${mm}`);
+					} : undefined}
+				>
 					{/* Shared dividers spanning all columns */}
 					<div className="df-dividers-overlay">
 						{hours.map(h => {

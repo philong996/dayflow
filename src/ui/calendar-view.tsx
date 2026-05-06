@@ -1,11 +1,14 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian';
 import { useState, useMemo } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { DateTime } from 'luxon';
+import { DateTime, Duration } from 'luxon';
+import { Link } from '@blacksmithgu/datacore';
 import type { CalendarViewState, CalendarMode } from './calendar-types';
 import { DEFAULT_CALENDAR_VIEW } from './calendar-types';
-import { DatacoreExtractor } from '../services/datacore-extractor';
+import { EntryService } from '../services/entry-service';
 import { CALENDAR_RENDERERS } from './calendar-renderers';
+import type { TimeEntry } from '../core/time-entry';
+import { PlanForm, type PlanDraft } from './components/plan-form';
 
 export const CALENDAR_VIEW_TYPE = 'dayflow-calendar';
 
@@ -15,10 +18,10 @@ export class CalendarView extends ItemView {
 
 	constructor(
 		leaf: WorkspaceLeaf,
-		private readonly extractor: DatacoreExtractor,
+		private readonly entryService: EntryService,
 		private readonly initialView: CalendarViewState,
 		private readonly saveView: (s: CalendarViewState) => Promise<void>,
-		private readonly settings: { calendarStartHour: number; calendarEndHour: number; areaColors: Record<string, string> },
+		private readonly settings: { calendarStartHour: number; calendarEndHour: number; areaColors: Record<string, string>; defaultArea?: string },
 	) {
 		super(leaf);
 	}
@@ -49,12 +52,13 @@ export class CalendarView extends ItemView {
 	private renderRoot(initialView = this.initialView): void {
 		this.root?.render(
 			<CalendarRoot
-				extractor={this.extractor}
+				entryService={this.entryService}
 				initialView={initialView}
 				saveView={this.saveView}
 				calendarStartHour={this.settings.calendarStartHour}
 				calendarEndHour={this.settings.calendarEndHour}
 				areaColors={this.settings.areaColors}
+				defaultArea={this.settings.defaultArea ?? ''}
 				revision={this.revision}
 				onRefresh={() => this.refresh()}
 			/>
@@ -63,18 +67,20 @@ export class CalendarView extends ItemView {
 }
 
 interface CalendarRootProps {
-	extractor:         DatacoreExtractor;
+	entryService:      EntryService;
 	initialView:       CalendarViewState;
 	saveView:          (s: CalendarViewState) => Promise<void>;
 	calendarStartHour: number;
 	calendarEndHour:   number;
 	areaColors:        Record<string, string>;
+	defaultArea:       string;
 	revision:          number;
 	onRefresh:         () => void;
 }
 
-function CalendarRoot({ extractor, initialView, saveView, calendarStartHour, calendarEndHour, areaColors, revision, onRefresh }: CalendarRootProps) {
+function CalendarRoot({ entryService, initialView, saveView, calendarStartHour, calendarEndHour, areaColors, defaultArea, revision, onRefresh }: CalendarRootProps) {
 	const [viewState, setViewState] = useState<CalendarViewState>(initialView);
+	const [planForm,  setPlanForm]  = useState<{ date: string; initialStart: string } | null>(null);
 
 	const renderer = useMemo(
 		() => new CALENDAR_RENDERERS[viewState.mode](),
@@ -83,13 +89,42 @@ function CalendarRoot({ extractor, initialView, saveView, calendarStartHour, cal
 
 	const { startDate, endDate } = renderer.getDateRange(viewState.currentDate);
 	const entries = useMemo(
-		() => extractor.fetchEntries(startDate, endDate, viewState.mode === 'daily' ? 'all' : 'tracked'),
+		() => entryService.fetchEntries(startDate, endDate, viewState.mode === 'daily' ? 'all' : 'tracked'),
 		[revision, startDate, endDate, viewState.mode],
 	);
 
 	const handleChange = (next: CalendarViewState) => {
 		setViewState(next);
 		saveView(next);
+	};
+
+	const handleSlotClick = viewState.mode === 'daily'
+		? (date: string, time: string) => setPlanForm({ date, initialStart: time })
+		: undefined;
+
+	const handleSavePlan = async (draft: PlanDraft) => {
+		const areaLink = parseLinkText(draft.area);
+		if (!areaLink) return;
+		const projectLink = draft.project ? parseLinkText(draft.project) ?? undefined : undefined;
+
+		const [sh = 0, sm = 0] = draft.start.split(':').map(Number);
+		const [eh = 0, em = 0] = draft.end.split(':').map(Number);
+		const durationMins = Math.max(0, eh * 60 + em - (sh * 60 + sm));
+
+		const entry: TimeEntry = {
+			id:       DateTime.now().toFormat('yyyyMMddHHmmssSSS'),
+			start:    draft.start,
+			end:      draft.end,
+			duration: Duration.fromObject({ minutes: durationMins }),
+			task:     draft.task,
+			subTask:  draft.subTask,
+			area:     areaLink,
+			project:  projectLink,
+			type:     'planned',
+		};
+
+		await entryService.saveEntry(entry, planForm!.date);
+		setPlanForm(null);
 	};
 
 	return (
@@ -99,13 +134,32 @@ function CalendarRoot({ extractor, initialView, saveView, calendarStartHour, cal
 				entries,
 				startDate,
 				endDate,
-				startHour:  calendarStartHour,
-				endHour:    calendarEndHour,
+				startHour:   calendarStartHour,
+				endHour:     calendarEndHour,
 				areaColors,
-				options:    viewState.options,
+				options:     viewState.options,
+				onSlotClick: handleSlotClick,
 			})}
+			{planForm && (
+				<PlanForm
+					initialStart={planForm.initialStart}
+					defaultArea={defaultArea}
+					onSave={handleSavePlan}
+					onCancel={() => setPlanForm(null)}
+				/>
+			)}
 		</div>
 	);
+}
+
+function parseLinkText(text: string): Link | null {
+	const inner = text.trim().replace(/^\[\[|\]\]$/g, '');
+	if (!inner) return null;
+	try {
+		return Link.parseInner(inner);
+	} catch {
+		return null;
+	}
 }
 
 interface CalendarToolbarProps {

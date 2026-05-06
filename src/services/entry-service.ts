@@ -1,25 +1,31 @@
 import { DatacoreApi, MarkdownListItem } from '@blacksmithgu/datacore';
-import type { TimeEntry } from '../domain/time-entry';
-import { EntryParser } from '../domain/entry-parser';
+import { getDailyNoteSettings } from 'obsidian-daily-notes-interface';
+import { DailyNoteWriter } from '../core/daily-note-writer';
+import { EntryParser } from '../core/entry-parser';
+import type { TimeEntry } from '../core/time-entry';
 
-export class DatacoreExtractor {
+export class EntryService {
 	private readonly parser = new EntryParser();
 
 	constructor(
 		private readonly api: DatacoreApi,
-		private readonly settings: { dailyNoteFolder: string },
+		private readonly writer: DailyNoteWriter,
 	) {}
 
 	fetchEntries(startDate: string, endDate: string, type: 'tracked' | 'planned' | 'all' = 'tracked'): TimeEntry[] {
-		const query = this.buildEntriesQuery(startDate, endDate, type);
+		const query = this.buildQuery(startDate, endDate, type);
 		const blocks = this.api.query(query).filter(
 			(b): b is MarkdownListItem => b !== null && typeof b === 'object',
 		);
 		return this.parser.parseAllEntries(blocks);
 	}
 
-	private buildEntriesQuery(startDate: string, endDate: string, type: 'tracked' | 'planned' | 'all'): string {
-		const folder = this.settings.dailyNoteFolder;
+	async saveEntry(entry: TimeEntry, date: string): Promise<void> {
+		await this.writer.writeEntryForDate(entry, date);
+	}
+
+	private buildQuery(startDate: string, endDate: string, type: 'tracked' | 'planned' | 'all'): string {
+		const folder = getDailyNoteSettings().folder ?? '';
 		const dateClause = startDate === endDate
 			? `$name = "${startDate}"`
 			: `($name >= "${startDate}" and $name <= "${endDate}")`;
@@ -33,4 +39,6 @@ export class DatacoreExtractor {
 				: '';
 		return `@list-item\n  and exists(duration)${typeClause}\n  and childof(\n      ${inner}\n  )`;
 	}
+
+
 }

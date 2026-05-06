@@ -2,29 +2,27 @@ import { Plugin, TFile, WorkspaceLeaf } from 'obsidian';
 import { DatacoreApi } from '@blacksmithgu/datacore';
 import { DayFlowSettings, DEFAULT_SETTINGS, DayFlowSettingTab } from './settings';
 import { CalendarViewState, DEFAULT_CALENDAR_VIEW } from './ui/calendar-types';
-import { DailyNoteWriter } from './domain/daily-note-writer';
-import { DatacoreExtractor } from './services/datacore-extractor';
+import { DailyNoteWriter } from './core/daily-note-writer';
+import { EntryService } from './services/entry-service';
 import { CalendarView, CALENDAR_VIEW_TYPE } from './ui/calendar-view';
 
 export default class DayFlowPlugin extends Plugin {
-	settings!: DayFlowSettings;
+	settings!:     DayFlowSettings;
 	calendarView!: CalendarViewState;
-	writer!: DailyNoteWriter;
+	entryService!: EntryService;
 
 	async onload() {
 		const data = await this.loadData() as { settings?: Partial<DayFlowSettings>; calendarView?: Partial<CalendarViewState> } | null;
-		this.settings    = { ...DEFAULT_SETTINGS,      ...data?.settings };
+		this.settings     = { ...DEFAULT_SETTINGS,      ...data?.settings };
 		this.calendarView = { ...DEFAULT_CALENDAR_VIEW, ...data?.calendarView };
 
-		this.writer = new DailyNoteWriter(this.app);
-
-		const datacoreApi = (this.app as any).plugins?.plugins?.['datacore']?.api as DatacoreApi | undefined;
-		const extractor = new DatacoreExtractor(datacoreApi!, this.settings);
+		const datacoreApi = (this.app as any).plugins?.plugins?.['datacore']?.api as DatacoreApi;
+		this.entryService = new EntryService(datacoreApi, new DailyNoteWriter(this.app));
 
 		this.registerView(CALENDAR_VIEW_TYPE, (leaf: WorkspaceLeaf) =>
 			new CalendarView(
 				leaf,
-				extractor,
+				this.entryService,
 				this.calendarView,
 				async (s) => { this.calendarView = s; await this.saveSettings(); },
 				this.settings,

@@ -6,7 +6,19 @@ export class DailyCalendarRenderer extends CalendarRenderer {
 		return { startDate: currentDate, endDate: currentDate };
 	}
 
-	renderGrid({ entries, startHour, endHour, startDate, areaColors }: CalendarRendererProps) {
-		return <DayGrid entries={entries} startHour={startHour} endHour={endHour} currentDate={startDate} areaColors={areaColors} />;
+	renderGrid({ entries, startHour, endHour, startDate, areaColors, onSlotClick }: CalendarRendererProps) {
+		const handleSlotClick = onSlotClick
+			? (time: string) => onSlotClick(startDate, time)
+			: undefined;
+		return (
+			<DayGrid
+				entries={entries}
+				startHour={startHour}
+				endHour={endHour}
+				currentDate={startDate}
+				areaColors={areaColors}
+				onSlotClick={handleSlotClick}
+			/>
+		);
 	}
 }

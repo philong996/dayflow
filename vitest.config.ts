@@ -7,6 +7,7 @@ export default defineConfig({
 		alias: {
 			obsidian: fileURLToPath(new URL('./tests/__mocks__/obsidian.ts', import.meta.url)),
 			'@blacksmithgu/datacore': fileURLToPath(new URL('./tests/__mocks__/datacore.ts', import.meta.url)),
+			'obsidian-daily-notes-interface': fileURLToPath(new URL('./tests/__mocks__/obsidian-daily-notes-interface.ts', import.meta.url)),
 		},
 	},
 });
