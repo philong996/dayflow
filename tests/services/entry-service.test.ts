@@ -37,7 +37,7 @@ describe('EntryService.buildQuery', () => {
 
 	it('adds not exists(type) clause for tracked', () => {
 		const q = buildQuery('', '2026-05-06', '2026-05-06', 'tracked');
-		expect(q).toContain('not exists(type)');
+		expect(q).toContain('!exists(type)');
 	});
 
 	it('adds type = "planned" clause for planned', () => {
@@ -47,7 +47,7 @@ describe('EntryService.buildQuery', () => {
 
 	it('adds no type clause for all', () => {
 		const q = buildQuery('', '2026-05-06', '2026-05-06', 'all');
-		expect(q).not.toContain('not exists(type)');
+		expect(q).not.toContain('!exists(type)');
 		expect(q).not.toContain('type = "planned"');
 	});
 });

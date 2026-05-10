@@ -2,13 +2,13 @@ import { ItemView, WorkspaceLeaf } from 'obsidian';
 import { useState, useMemo } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { DateTime, Duration } from 'luxon';
-import { Link } from '@blacksmithgu/datacore';
 import type { CalendarViewState, CalendarMode } from './calendar-types';
 import { DEFAULT_CALENDAR_VIEW } from './calendar-types';
 import { EntryService } from '../services/entry-service';
 import { CALENDAR_RENDERERS } from './calendar-renderers';
 import type { TimeEntry } from '../core/time-entry';
 import { PlanForm, type PlanDraft } from './components/plan-form';
+import { parseLinkText } from '../utils/link';
 
 export const CALENDAR_VIEW_TYPE = 'dayflow-calendar';
 
@@ -103,8 +103,7 @@ function CalendarRoot({ entryService, initialView, saveView, calendarStartHour, 
 		: undefined;
 
 	const handleSavePlan = async (draft: PlanDraft) => {
-		const areaLink = parseLinkText(draft.area);
-		if (!areaLink) return;
+		if (!draft.area.trim()) return;
 		const projectLink = draft.project ? parseLinkText(draft.project) ?? undefined : undefined;
 
 		const [sh = 0, sm = 0] = draft.start.split(':').map(Number);
@@ -118,7 +117,7 @@ function CalendarRoot({ entryService, initialView, saveView, calendarStartHour, 
 			duration: Duration.fromObject({ minutes: durationMins }),
 			task:     draft.task,
 			subTask:  draft.subTask,
-			area:     areaLink,
+			area:     draft.area.trim(),
 			project:  projectLink,
 			type:     'planned',
 		};
@@ -152,15 +151,6 @@ function CalendarRoot({ entryService, initialView, saveView, calendarStartHour, 
 	);
 }
 
-function parseLinkText(text: string): Link | null {
-	const inner = text.trim().replace(/^\[\[|\]\]$/g, '');
-	if (!inner) return null;
-	try {
-		return Link.parseInner(inner);
-	} catch {
-		return null;
-	}
-}
 
 interface CalendarToolbarProps {
 	viewState: CalendarViewState;

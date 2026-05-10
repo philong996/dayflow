@@ -33,7 +33,7 @@ export class EntryService {
 			? `path("${folder}")\n      and ${dateClause}`
 			: dateClause;
 		const typeClause = type === 'tracked'
-			? '\n  and not exists(type)'
+			? '\n  and !exists(type)'
 			: type === 'planned'
 				? '\n  and type = "planned"'
 				: '';

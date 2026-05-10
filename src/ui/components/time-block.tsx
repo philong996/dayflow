@@ -72,7 +72,7 @@ export function TimeBlock({ entry, startHour, totalMinutes, pxPerHour, areaColor
 	const top    = (offsetMinutes / totalMinutes) * 100;
 	const height = (durationMins  / totalMinutes) * 100;
 
-	const areaKey = entry.area.subpath ?? entry.area.path.split('/').pop();
+	const areaKey = entry.area;
 	const colors  = getAreaColors(areaKey, areaColors);
 
 	const showSubTask = heightPx > 32 && !!entry.subTask;
@@ -113,7 +113,7 @@ interface TooltipProps {
 }
 
 function BlockTooltip({ entry, colors, x, y }: TooltipProps) {
-	const areaLabel    = entry.area.subpath ?? entry.area.path.split('/').pop() ?? entry.area.path;
+	const areaLabel    = entry.area;
 	const projectLabel = entry.project
 		? (entry.project.subpath ?? entry.project.path.split('/').pop() ?? entry.project.path)
 		: null;
