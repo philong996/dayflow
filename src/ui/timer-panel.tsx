@@ -1,15 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
 import { DateTime, Duration } from 'luxon';
-import type { TimerService } from '../../services/timer-service';
-import type { TimeEntry } from '../../core/time-entry';
-import { pad, nowHHmm, fmtElapsed, fmtDuration } from '../../utils/format';
-import { linkLabel, parseLinkText } from '../../utils/link';
+import type { TimerService } from '../services/timer-service';
+import { AreaService } from '../services/area-service';
+import type { TimeEntry } from '../core/time-entry';
+import { pad, nowHHmm, fmtElapsed, fmtDuration } from '../utils/datetime';
+import { linkLabel, parseLinkText } from '../utils/link';
+import { getAreaColors } from './components/time-block';
 
 // ── EntryRow ─────────────────────────────────────────────────────────────────
 
-function EntryRow({ entry }: { entry: TimeEntry }) {
+function EntryRow({ entry, areaColors }: { entry: TimeEntry; areaColors: Record<string, string> }) {
 	const [hovered, setHovered] = useState(false);
-	const mins = Math.round(entry.duration.as('minutes'));
+	const mins   = Math.round(entry.duration.as('minutes'));
+	const colors = getAreaColors(entry.area, areaColors);
 
 	return (
 		<div
@@ -33,7 +36,12 @@ function EntryRow({ entry }: { entry: TimeEntry }) {
 			</div>
 
 			<div className="df-timer-entry-chips">
-				<span className="df-timer-chip-area">{entry.area}</span>
+				<span
+					className="df-timer-chip-area"
+					style={{ backgroundColor: colors.badgeBg, color: colors.badgeText }}
+				>
+					{entry.area}
+				</span>
 				{entry.project && <span className="df-timer-chip-project">{linkLabel(entry.project)}</span>}
 			</div>
 
@@ -51,11 +59,16 @@ export interface TimerPanelProps {
 	timerService: TimerService;
 	defaultArea:  string;
 	revision:     number;
+	areaService:  AreaService;
 }
 
-export function TimerPanel({ timerService, defaultArea, revision }: TimerPanelProps) {
+export function TimerPanel({ timerService, defaultArea, revision, areaService }: TimerPanelProps) {
 	const activeEntry = timerService.getActiveEntry();
 	const running     = timerService.isRunning();
+
+	const year       = DateTime.now().year.toString();
+	const areas      = areaService.getAreas(year);
+	const areaColors = areaService.getAreaColors(year);
 
 	const [task,        setTask]        = useState(activeEntry?.task ?? '');
 	const [subTask,     setSubTask]     = useState(activeEntry?.subTask ?? '');
@@ -152,13 +165,17 @@ export function TimerPanel({ timerService, defaultArea, revision }: TimerPanelPr
 
 				{/* Row 2: area · project */}
 				<div className="df-timer-meta-row">
-					<input
+					<select
 						value={area}
 						onChange={e => setArea(e.target.value)}
-						placeholder="Area name"
 						disabled={running}
 						className="df-timer-chip-input"
-					/>
+					>
+						<option value="" disabled>Area…</option>
+						{areas.map(a => (
+							<option key={a.name} value={a.name}>{a.name}</option>
+						))}
+					</select>
 					<input
 						value={project}
 						onChange={e => setProject(e.target.value)}
@@ -191,7 +208,7 @@ export function TimerPanel({ timerService, defaultArea, revision }: TimerPanelPr
 			{entries.length === 0 ? (
 				<div className="df-timer-empty">No entries yet.</div>
 			) : (
-				entries.map(e => <EntryRow key={e.id} entry={e} />)
+				entries.map(e => <EntryRow key={e.id} entry={e} areaColors={areaColors} />)
 			)}
 		</div>
 	);

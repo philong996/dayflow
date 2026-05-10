@@ -11,3 +11,9 @@ export function parseLinkText(text: string): Link | null {
 	if (!inner) return null;
 	try { return Link.parseInner(inner); } catch { return null; }
 }
+
+
+export function isLink(val: unknown): val is Link {
+	return typeof val === 'object' && val !== null
+		&& typeof (val as Record<string, unknown>)['path'] === 'string';
+}

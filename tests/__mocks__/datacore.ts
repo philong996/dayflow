@@ -44,12 +44,6 @@ export class Link {
 	}
 }
 
-export const Literals = {
-	isLink(val: unknown): val is Link {
-		return val instanceof Link;
-	},
-};
-
 export type MarkdownListItem = {
 	$blockId?: string;
 	$text?: string;

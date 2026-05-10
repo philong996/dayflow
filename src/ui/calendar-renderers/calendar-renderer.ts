@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import type { TimeEntry } from '../../core/time-entry';
-import type { CalendarViewOptions } from '../calendar-types';
+import type { CalendarViewOptions } from '../calendar';
 
 export interface CalendarRendererProps {
 	entries:      TimeEntry[];

@@ -1,11 +1,7 @@
 import { Duration } from 'luxon';
-import { type MarkdownListItem, type Link } from '@blacksmithgu/datacore';
+import { type MarkdownListItem } from '@blacksmithgu/datacore';
 import type { TimeEntry } from './time-entry';
-
-function isLink(val: unknown): val is Link {
-	return typeof val === 'object' && val !== null
-		&& typeof (val as Record<string, unknown>)['path'] === 'string';
-}
+import { isLink } from '../utils/link';
 
 export class EntryParser {
 	parseAllEntries(blocks: MarkdownListItem[]): TimeEntry[] {

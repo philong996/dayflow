@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { Duration } from 'luxon';
 import type { TimeEntry } from '../../core/time-entry';
+import { fmtTime, fmtDuration, toMinutes } from '../../utils/datetime';
 
 
 // ─── Area colors ─────────────────────────────────────────────────────────
@@ -24,32 +24,6 @@ export function getAreaColors(areaName: string | undefined, areaColors: Record<s
 		badgeBg:   hex + '26',
 		badgeText: hex,
 	};
-}
-
-// ─── Formatting helpers ───────────────────────────────────────────────────────
-
-export function formatTime(hhmm: string): string {
-	const [h, m] = hhmm.split(':').map(Number);
-	const hour = h ?? 0;
-	const period = hour >= 12 ? 'pm' : 'am';
-	const h12 = hour % 12 || 12;
-	const min = (m ?? 0) > 0 ? `:${String(m).padStart(2, '0')}` : '';
-	return `${h12}${min} ${period}`;
-}
-
-export function formatDuration(duration: Duration): string {
-	const total = Math.round(duration.as('minutes'));
-	const h = Math.floor(total / 60);
-	const m = total % 60;
-	if (h === 0) return `${m}m`;
-	if (m === 0) return `${h}h`;
-	return `${h}h ${m}m`;
-}
-
-
-function toMinutes(hhmm: string): number {
-	const [h, m] = hhmm.split(':').map(Number);
-	return (h ?? 0) * 60 + (m ?? 0);
 }
 
 // ─── TimeBlock ────────────────────────────────────────────────────────────────
@@ -127,7 +101,7 @@ function BlockTooltip({ entry, colors, x, y }: TooltipProps) {
 			)}
 			<div className="df-tooltip-divider" />
 			<div className="df-tooltip-time">
-				{formatTime(entry.start)} – {formatTime(entry.end)} · {formatDuration(entry.duration)}
+				{fmtTime(entry.start)} – {fmtTime(entry.end)} · {fmtDuration(Math.round(entry.duration.as('minutes')))}
 			</div>
 			
 			

@@ -1,9 +1,9 @@
 import { Plugin, TFile, WorkspaceLeaf } from 'obsidian';
 import { DatacoreApi } from '@blacksmithgu/datacore';
 import { DayFlowSettings, DEFAULT_SETTINGS, DayFlowSettingTab } from './settings';
-import { CalendarViewState, DEFAULT_CALENDAR_VIEW } from './ui/calendar-types';
 import { DailyNoteWriter } from './core/daily-note-writer';
 import { EntryService } from './services/entry-service';
+import { AreaService } from './services/area-service';
 import { TimerService, type TimerState } from './services/timer-service';
 import { CalendarView, CALENDAR_VIEW_TYPE } from './ui/calendar-view';
 import { TimerPanelView, TIMER_PANEL_VIEW_TYPE } from './ui/timer-panel-view';
@@ -12,24 +12,23 @@ const DEFAULT_TIMER_STATE: TimerState = { status: 'idle' };
 
 export default class DayFlowPlugin extends Plugin {
 	settings!:     DayFlowSettings;
-	calendarView!: CalendarViewState;
 	timerState!:   TimerState;
 	entryService!: EntryService;
+	areaService!:  AreaService;
 	timerService!: TimerService;
 
 	async onload() {
 		const data = await this.loadData() as {
-			settings?:    Partial<DayFlowSettings>;
-			calendarView?: Partial<CalendarViewState>;
-			timerState?:  TimerState;
+			settings?:   Partial<DayFlowSettings>;
+			timerState?: TimerState;
 		} | null;
 
-		this.settings     = { ...DEFAULT_SETTINGS,      ...data?.settings };
-		this.calendarView = { ...DEFAULT_CALENDAR_VIEW, ...data?.calendarView };
-		this.timerState   = data?.timerState ?? DEFAULT_TIMER_STATE;
+		this.settings   = { ...DEFAULT_SETTINGS, ...data?.settings };
+		this.timerState = data?.timerState ?? DEFAULT_TIMER_STATE;
 
 		const datacoreApi = (this.app as any).plugins?.plugins?.['datacore']?.api as DatacoreApi;
 		this.entryService = new EntryService(datacoreApi, new DailyNoteWriter(this.app));
+		this.areaService  = new AreaService(datacoreApi);
 		this.timerService = new TimerService(
 			()  => this.timerState,
 			async (s) => { this.timerState = s; await this.saveSettings(); },
@@ -40,9 +39,8 @@ export default class DayFlowPlugin extends Plugin {
 			new CalendarView(
 				leaf,
 				this.entryService,
-				this.calendarView,
-				async (s) => { this.calendarView = s; await this.saveSettings(); },
 				this.settings,
+				this.areaService,
 			)
 		);
 
@@ -51,6 +49,7 @@ export default class DayFlowPlugin extends Plugin {
 				leaf,
 				this.timerService,
 				() => this.settings.defaultArea ?? '',
+				this.areaService,
 			)
 		);
 
@@ -87,9 +86,8 @@ export default class DayFlowPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData({
-			settings:    this.settings,
-			calendarView: this.calendarView,
-			timerState:  this.timerState,
+			settings:   this.settings,
+			timerState: this.timerState,
 		});
 	}
 

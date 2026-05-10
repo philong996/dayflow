@@ -1,6 +1,6 @@
 # UI — Implementation Details
 
-## Calendar State Types (`src/ui/components/calendar-types.ts`)
+## Calendar State Types ([src/ui/calendar.tsx](src/ui/calendar.tsx))
 
 `CalendarViewState` holds `mode` (`daily | weekly | monthly`), `currentDate` (ISO string), and
 `options` (`showTracked`). State is kept in memory in `Calendar` and re-initialized on view
@@ -9,9 +9,8 @@ open; it is not persisted yet.
 ## Calendar View Composition
 
 `CalendarView` remains an `ItemView` wrapper that wires services and settings. UI state, plan
-creation, and renderer selection live in `Calendar` in
-`src/ui/components/calendar-root.tsx`, while toolbar controls are in
-`src/ui/components/calendar-toolbar.tsx`.
+creation, and renderer selection live in `Calendar` in [src/ui/calendar.tsx](src/ui/calendar.tsx),
+while toolbar controls are in [src/ui/components/calendar-toolbar.tsx](src/ui/components/calendar-toolbar.tsx).
 
 ---
 
@@ -120,9 +119,10 @@ via `parseLinkText` before saving. Entry IDs are generated as a Luxon timestamp 
 
 ## Timer Panel
 
-`TimerPanelView` renders `TimerPanel` (in `timer-form.tsx`) and bumps a `revision` counter on
-refresh. `TimerPanel` pulls `TimerState` from `TimerService`, sets a 1-second interval for the
-elapsed clock, and uses `revision` to re-fetch today’s tracked entries. Inputs are disabled
-while running. Starting a timer writes a tracked entry immediately; stopping updates end time
-and duration. The panel includes a task/sub-task row, area/project row (area options from
-`AreaService`), optional description, and a list of today’s entries with a total time badge.
+`TimerPanelView` renders `TimerPanel` (in [src/ui/timer-panel.tsx](src/ui/timer-panel.tsx)) and
+bumps a `revision` counter on refresh. `TimerPanel` pulls `TimerState` from `TimerService`, sets
+a 1-second interval for the elapsed clock, and uses `revision` to re-fetch today’s tracked
+entries. Inputs are disabled while running. Starting a timer writes a tracked entry immediately;
+stopping updates end time and duration. The panel includes a task/sub-task row, area/project row
+(area options from `AreaService`), optional description, and a list of today’s entries with a
+total time badge.

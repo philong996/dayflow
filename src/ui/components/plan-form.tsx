@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import type { Area } from '../../core/area';
 
 export interface PlanDraft {
 	start:    string;
@@ -13,11 +14,19 @@ export interface PlanDraft {
 interface PlanFormProps {
 	initialStart: string;
 	defaultArea:  string;
+	areas:        Area[];
 	onSave:       (draft: PlanDraft) => void;
 	onCancel:     () => void;
 }
 
-export function PlanForm({ initialStart, defaultArea, onSave, onCancel }: PlanFormProps) {
+
+function computeDefaultEnd(start: string): string {
+	const [h = 0, m = 0] = start.split(':').map(Number);
+	const total = Math.min(h * 60 + m + 30, 23 * 60 + 59);
+	return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
+export function PlanForm({ initialStart, defaultArea, areas, onSave, onCancel }: PlanFormProps) {
 	const defaultEnd = computeDefaultEnd(initialStart);
 
 	const [start,   setStart]   = useState(initialStart);
@@ -93,14 +102,17 @@ export function PlanForm({ initialStart, defaultArea, onSave, onCancel }: PlanFo
 					</div>
 					<div className="df-plan-row">
 						<label className="df-plan-label">Area</label>
-						<input
+						<select
 							className="df-plan-input"
-							type="text"
 							value={area}
 							onChange={e => setArea(e.target.value)}
-							placeholder="[[2026#Work]]"
 							required
-						/>
+						>
+							<option value="" disabled>Select area…</option>
+							{areas.map(a => (
+								<option key={a.name} value={a.name}>{a.name}</option>
+							))}
+						</select>
 					</div>
 					<div className="df-plan-row">
 						<label className="df-plan-label">Project</label>
@@ -123,8 +135,4 @@ export function PlanForm({ initialStart, defaultArea, onSave, onCancel }: PlanFo
 	);
 }
 
-function computeDefaultEnd(start: string): string {
-	const [h = 0, m = 0] = start.split(':').map(Number);
-	const total = Math.min(h * 60 + m + 30, 23 * 60 + 59);
-	return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
-}
+

@@ -1,15 +1,10 @@
 import { useState, useEffect, Fragment } from 'react';
 import { DateTime, Duration } from 'luxon';
-import { TimeBlock, formatDuration } from './time-block';
+import { TimeBlock } from './time-block';
 import type { TimeEntry } from '../../core/time-entry';
+import { fmtDuration, hourLabel } from '../../utils/datetime';
 
 export const PX_PER_HOUR = 56;
-
-function hourLabel(h: number): string {
-	if (h === 0)  return '12 am';
-	if (h === 12) return '12 pm';
-	return h > 12 ? `${h - 12} pm` : `${h} am`;
-}
 
 interface DayGridProps {
 	entries:      TimeEntry[];
@@ -44,7 +39,7 @@ export function DayGrid({ entries, startHour, endHour, currentDate, areaColors, 
 	// Header
 	const dayTitle   = DateTime.fromISO(currentDate).toFormat('yyyy-MM-dd');
 	const totalTime  = tracked.reduce((s, e) => s.plus(e.duration), Duration.fromMillis(0));
-	const totalLabel = tracked.length > 0 ? `${formatDuration(totalTime)} tracked` : '';
+	const totalLabel = tracked.length > 0 ? `${fmtDuration(Math.round(totalTime.as('minutes')))} tracked` : '';
 
 	return (
 		<div className="df-day-wrapper">

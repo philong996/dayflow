@@ -1,4 +1,4 @@
-import type { CalendarMode } from '../calendar-types';
+import type { CalendarMode } from '../calendar';
 import { CalendarRenderer } from './calendar-renderer';
 import { DailyCalendarRenderer } from './daily-calendar-renderer';
 import { WeeklyCalendarRenderer } from './weekly-calendar-renderer';
