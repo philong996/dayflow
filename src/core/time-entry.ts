@@ -9,7 +9,7 @@ export interface TimeEntry {
 	task:         string;
 	subTask?:     string;
 	description?: string;
-	area:         Link;
+	area:         string;
 	project?:     Link;
 	type:         'planned' | 'tracked';
 }

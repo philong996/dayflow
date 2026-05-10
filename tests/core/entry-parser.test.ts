@@ -9,13 +9,12 @@ const parser = new EntryParser();
 const pos = { line: 0, start: 0, startValue: 0, end: 0 };
 
 function makeItem(overrides: Partial<MarkdownListItem> & { $text?: string } = {}): MarkdownListItem {
-	const area = Link.header('2026', 'Career');
 	return {
 		$blockId: 'abc123',
-		$text: '09:00 - 10:30 (duration:: 1h 30m): DayFlow | | Implement parser (area:: [[2026#Career]]) ^abc123',
+		$text: '09:00 - 10:30 (duration:: 1h 30m): DayFlow | | Implement parser (area:: Career) ^abc123',
 		$infields: {
 			duration: { key: 'duration', raw: '1h 30m', value: Duration.fromObject({ hours: 1, minutes: 30 }), position: pos },
-			area:     { key: 'area',     raw: '[[2026#Career]]', value: area, position: pos },
+			area:     { key: 'area',     raw: 'Career', value: 'Career', position: pos },
 		},
 		...overrides,
 	} as MarkdownListItem & { $text: string };
@@ -34,14 +33,14 @@ describe('EntryParser.parseEntry', () => {
 		expect(entry!.task).toBe('DayFlow');
 		expect(entry!.subTask).toBeUndefined();
 		expect(entry!.description).toBe('Implement parser');
-		expect(entry!.area.markdown()).toBe('[[2026#Career]]');
+		expect(entry!.area).toBe('Career');
 		expect(entry!.project).toBeUndefined();
 		expect(entry!.type).toBe('tracked');
 	});
 
 	it('parses three body segments into task, subTask, description', () => {
 		const entry = parser.parseEntry(makeItem({
-			$text: '09:00 - 10:30 (duration:: 1h 30m): Deep work | Backend | Implement parser (area:: [[2026#Career]]) ^abc123',
+			$text: '09:00 - 10:30 (duration:: 1h 30m): Deep work | Backend | Implement parser (area:: Career) ^abc123',
 		}));
 		expect(entry!.task).toBe('Deep work');
 		expect(entry!.subTask).toBe('Backend');
@@ -50,13 +49,11 @@ describe('EntryParser.parseEntry', () => {
 	});
 
 	it('parses a planned entry with type:: planned', () => {
-		const pos = { line: 0, start: 0, startValue: 0, end: 0 };
-		const area = Link.header('2026', 'Career');
 		const item = makeItem({
-			$text: '10:00 - 11:00 (duration:: 1h 0m): Plan feature | Backend (area:: [[2026#Career]]) (type:: planned) ^abc123',
+			$text: '10:00 - 11:00 (duration:: 1h 0m): Plan feature | Backend (area:: Career) (type:: planned) ^abc123',
 			$infields: {
 				duration: { key: 'duration', raw: '1h 0m', value: Duration.fromObject({ hours: 1 }), position: pos },
-				area:     { key: 'area', raw: '[[2026#Career]]', value: area, position: pos },
+				area:     { key: 'area', raw: 'Career', value: 'Career', position: pos },
 				type:     { key: 'type', raw: 'planned', value: 'planned', position: pos },
 			},
 		});
@@ -68,13 +65,11 @@ describe('EntryParser.parseEntry', () => {
 	});
 
 	it('parses a planned entry with no subTask', () => {
-		const pos = { line: 0, start: 0, startValue: 0, end: 0 };
-		const area = Link.header('2026', 'Career');
 		const item = makeItem({
-			$text: '10:00 - 11:00 (duration:: 1h 0m): Plan feature (area:: [[2026#Career]]) (type:: planned) ^abc123',
+			$text: '10:00 - 11:00 (duration:: 1h 0m): Plan feature (area:: Career) (type:: planned) ^abc123',
 			$infields: {
 				duration: { key: 'duration', raw: '1h 0m', value: Duration.fromObject({ hours: 1 }), position: pos },
-				area:     { key: 'area', raw: '[[2026#Career]]', value: area, position: pos },
+				area:     { key: 'area', raw: 'Career', value: 'Career', position: pos },
 				type:     { key: 'type', raw: 'planned', value: 'planned', position: pos },
 			},
 		});
@@ -94,7 +89,7 @@ describe('EntryParser.parseEntry', () => {
 			},
 		});
 		const entry = parser.parseEntry(item);
-		expect(entry!.project?.markdown()).toBe('[[MyProject]]');
+		expect(entry!.project?.markdown()).toBe('[[MyProject]]'); // project stays as Link
 	});
 
 	it('returns null when $blockId is absent', () => {
@@ -125,11 +120,11 @@ describe('EntryParser.parseEntry', () => {
 		expect(parser.parseEntry(makeItem({ $infields: rest }))).toBeNull();
 	});
 
-	it('returns null when area value is not a Link', () => {
+	it('returns null when area value is not a string', () => {
 		const item = makeItem({
 			$infields: {
 				...makeItem().$infields,
-				area: { key: 'area', raw: 'not-a-link', value: 'not-a-link', position: pos },
+				area: { key: 'area', raw: '', value: 42, position: pos },
 			},
 		});
 		expect(parser.parseEntry(item)).toBeNull();

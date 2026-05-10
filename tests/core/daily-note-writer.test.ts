@@ -14,7 +14,6 @@ function link(markdown: string): Link {
 	return { markdown: () => markdown } as unknown as Link;
 }
 
-const area    = link('[[2026#Engineering]]');
 const project = link('[[Project - DayFlow]]');
 
 function makeEntry(overrides: Partial<TimeEntry> = {}): TimeEntry {
@@ -25,7 +24,7 @@ function makeEntry(overrides: Partial<TimeEntry> = {}): TimeEntry {
 		duration:    Duration.fromISO('PT1H30M'),
 		task:        'Write parser',
 		description: 'Implemented the entry parser',
-		area,
+		area : 'Engineering',
 		type:        'tracked',
 		...overrides,
 	};
@@ -37,7 +36,7 @@ describe('serializeEntry', () => {
 	it('produces the correct list item format', () => {
 		const result = serializeEntry(makeEntry());
 		expect(result).toBe(
-			'- 09:00 - 10:30 (duration:: 1h 30m): Write parser | Implemented the entry parser (area:: [[2026#Engineering]]) ^abc123'
+			'- 09:00 - 10:30 (duration:: 1h 30m): Write parser | Implemented the entry parser (area:: Engineering) ^abc123'
 		);
 	});
 

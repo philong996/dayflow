@@ -40,7 +40,7 @@ export class EntryParser {
 		if (duration === undefined || !Duration.isDuration(duration)) return null;
 
 		const rawArea = item.$infields['area']?.value;
-		if (!isLink(rawArea)) return null;
+		if (typeof rawArea !== 'string') return null;
 
 		const rawProject = item.$infields['project']?.value;
 		const project = isLink(rawProject) ? rawProject : undefined;

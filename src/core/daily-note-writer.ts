@@ -40,7 +40,7 @@ export function serializeEntry(entry: TimeEntry): string {
 			: `${entry.task} | ${entry.description ?? ''}`;
 	}
 
-	const area      = `(area:: ${entry.area.markdown()})`;
+	const area      = `(area:: ${entry.area})`;
 	const project   = entry.project ? ` (project:: ${entry.project.markdown()})` : '';
 	const typeField = entry.type === 'planned' ? ' (type:: planned)' : '';
 
