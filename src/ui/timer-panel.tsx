@@ -66,9 +66,8 @@ export function TimerPanel({ timerService, defaultArea, revision, areaService }:
 	const activeEntry = timerService.getActiveEntry();
 	const running     = timerService.isRunning();
 
-	const year       = DateTime.now().year.toString();
-	const areas      = areaService.getAreas(year);
-	const areaColors = areaService.getAreaColors(year);
+	const areas      = areaService.getAreas();
+	const areaColors = areaService.getAreaColors();
 
 	const [task,        setTask]        = useState(activeEntry?.task ?? '');
 	const [subTask,     setSubTask]     = useState(activeEntry?.subTask ?? '');

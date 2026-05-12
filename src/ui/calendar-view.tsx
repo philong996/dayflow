@@ -1,6 +1,5 @@
 import { ItemView, WorkspaceLeaf } from 'obsidian';
 import { createRoot, type Root } from 'react-dom/client';
-import { DateTime } from 'luxon';
 import { DEFAULT_CALENDAR_VIEW , type CalendarViewState, Calendar } from './calendar';
 import { EntryService } from '../services/entry-service';
 import { AreaService } from '../services/area-service';

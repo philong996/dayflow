@@ -47,9 +47,8 @@ export function Calendar({ entryService, areaService, initialView, calendarStart
 		[viewState.mode],
 	);
 
-	const year = viewState.currentDate.slice(0, 4);
-	const areaColors = areaService.getAreaColors(year);
-	const areas      = areaService.getAreas(year);
+	const areaColors = areaService.getAreaColors();
+	const areas      = areaService.getAreas();
 
 	const { startDate, endDate } = renderer.getDateRange(viewState.currentDate);
 	const entries = useMemo(
