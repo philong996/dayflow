@@ -4,6 +4,7 @@ import { DayFlowSettings, DEFAULT_SETTINGS, DayFlowSettingTab } from './settings
 import { DailyNoteWriter } from './core/daily-note-writer';
 import { EntryService } from './services/entry-service';
 import { AreaService } from './services/area-service';
+import { ProjectService } from './services/project-service';
 import { TimerService, type TimerState } from './services/timer-service';
 import { CalendarView, CALENDAR_VIEW_TYPE } from './ui/calendar-view';
 import { TimerPanelView, TIMER_PANEL_VIEW_TYPE } from './ui/timer-panel-view';
@@ -11,11 +12,12 @@ import { TimerPanelView, TIMER_PANEL_VIEW_TYPE } from './ui/timer-panel-view';
 const DEFAULT_TIMER_STATE: TimerState = { status: 'idle' };
 
 export default class DayFlowPlugin extends Plugin {
-	settings!:     DayFlowSettings;
-	timerState!:   TimerState;
-	entryService!: EntryService;
-	areaService!:  AreaService;
-	timerService!: TimerService;
+	settings!:        DayFlowSettings;
+	timerState!:      TimerState;
+	entryService!:    EntryService;
+	areaService!:     AreaService;
+	projectService!:  ProjectService;
+	timerService!:    TimerService;
 
 	async onload() {
 		const data = await this.loadData() as {
@@ -27,9 +29,10 @@ export default class DayFlowPlugin extends Plugin {
 		this.timerState = data?.timerState ?? DEFAULT_TIMER_STATE;
 
 		const datacoreApi = (this.app as any).plugins?.plugins?.['datacore']?.api as DatacoreApi;
-		this.entryService = new EntryService(datacoreApi, new DailyNoteWriter(this.app));
-		this.areaService  = new AreaService(datacoreApi);
-		this.timerService = new TimerService(
+		this.entryService   = new EntryService(datacoreApi, new DailyNoteWriter(this.app));
+		this.areaService    = new AreaService(datacoreApi);
+		this.projectService = new ProjectService(datacoreApi);
+		this.timerService   = new TimerService(
 			()  => this.timerState,
 			async (s) => { this.timerState = s; await this.saveSettings(); },
 			this.entryService,
@@ -41,6 +44,7 @@ export default class DayFlowPlugin extends Plugin {
 				this.entryService,
 				this.settings,
 				this.areaService,
+				this.projectService,
 			)
 		);
 
@@ -50,6 +54,7 @@ export default class DayFlowPlugin extends Plugin {
 				this.timerService,
 				() => this.settings.defaultArea ?? '',
 				this.areaService,
+				this.projectService,
 			)
 		);
 

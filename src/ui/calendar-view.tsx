@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { DEFAULT_CALENDAR_VIEW , type CalendarViewState, Calendar } from './calendar';
 import { EntryService } from '../services/entry-service';
 import { AreaService } from '../services/area-service';
+import { ProjectService } from '../services/project-service';
 
 export const CALENDAR_VIEW_TYPE = 'dayflow-calendar';
 
@@ -12,9 +13,10 @@ export class CalendarView extends ItemView {
 
 	constructor(
 		leaf: WorkspaceLeaf,
-		private readonly entryService: EntryService,
-		private readonly settings: { calendarStartHour: number; calendarEndHour: number; defaultArea?: string },
-		private readonly areaService: AreaService,
+		private readonly entryService:    EntryService,
+		private readonly settings:        { calendarStartHour: number; calendarEndHour: number; defaultArea?: string },
+		private readonly areaService:     AreaService,
+		private readonly projectService:  ProjectService,
 	) {
 		super(leaf);
 	}
@@ -45,6 +47,7 @@ export class CalendarView extends ItemView {
 			<Calendar
 				entryService={this.entryService}
 				areaService={this.areaService}
+				projectService={this.projectService}
 				initialView={initialView}
 				calendarStartHour={this.settings.calendarStartHour}
 				calendarEndHour={this.settings.calendarEndHour}

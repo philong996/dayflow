@@ -1,21 +1,17 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { DateTime, Duration } from 'luxon';
 import type { Area } from '../../core/area';
-
-export interface PlanDraft {
-	start:    string;
-	end:      string;
-	task:     string;
-	subTask?: string;
-	area:     string;
-	project?: string;
-}
+import type { Project } from '../../core/project';
+import type { TimeEntry } from '../../core/time-entry';
+import { parseLinkText } from '../../utils/link';
 
 interface PlanFormProps {
 	initialStart: string;
 	defaultArea:  string;
 	areas:        Area[];
-	onSave:       (draft: PlanDraft) => void;
+	projects:     Project[];
+	onSave:       (entry: TimeEntry) => void;
 	onCancel:     () => void;
 }
 
@@ -26,7 +22,7 @@ function computeDefaultEnd(start: string): string {
 	return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
-export function PlanForm({ initialStart, defaultArea, areas, onSave, onCancel }: PlanFormProps) {
+export function PlanForm({ initialStart, defaultArea, areas, projects, onSave, onCancel }: PlanFormProps) {
 	const defaultEnd = computeDefaultEnd(initialStart);
 
 	const [start,   setStart]   = useState(initialStart);
@@ -39,14 +35,21 @@ export function PlanForm({ initialStart, defaultArea, areas, onSave, onCancel }:
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		if (!start || !end || !task.trim() || !area.trim()) return;
-		onSave({
+		const [sh = 0, sm = 0] = start.split(':').map(Number);
+		const [eh = 0, em = 0] = end.split(':').map(Number);
+		const durationMins = Math.max(0, eh * 60 + em - (sh * 60 + sm));
+		const entry: TimeEntry = {
+			id:       DateTime.now().toFormat('yyyyMMddHHmmssSSS'),
 			start,
 			end,
-			task:    task.trim(),
-			subTask: subTask.trim() || undefined,
-			area:    area.trim(),
-			project: project.trim() || undefined,
-		});
+			duration: Duration.fromObject({ minutes: durationMins }),
+			task:     task.trim(),
+			subTask:  subTask.trim() || undefined,
+			area:     area.trim(),
+			project:  project ? parseLinkText('[[' + project + ']]') ?? undefined : undefined,
+			type:     'planned',
+		};
+		onSave(entry);
 	};
 
 	return createPortal(
@@ -116,13 +119,16 @@ export function PlanForm({ initialStart, defaultArea, areas, onSave, onCancel }:
 					</div>
 					<div className="df-plan-row">
 						<label className="df-plan-label">Project</label>
-						<input
+						<select
 							className="df-plan-input"
-							type="text"
 							value={project}
 							onChange={e => setProject(e.target.value)}
-							placeholder="[[ProjectName]] (optional)"
-						/>
+						>
+							<option value="">No project</option>
+							{projects.map(p => (
+								<option key={p.path} value={p.name}>{p.name}</option>
+							))}
+						</select>
 					</div>
 					<div className="df-plan-actions">
 						<button className="df-plan-btn" type="button" onClick={onCancel}>Cancel</button>
@@ -134,5 +140,3 @@ export function PlanForm({ initialStart, defaultArea, areas, onSave, onCancel }:
 		document.body,
 	);
 }
-
-

@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
-import { DateTime, Duration } from 'luxon';
+import { DateTime } from 'luxon';
 import type { TimeEntry } from '../core/time-entry';
 import { EntryService } from '../services/entry-service';
 import { AreaService } from '../services/area-service';
+import { ProjectService } from '../services/project-service';
 import { CALENDAR_RENDERERS } from './calendar-renderers';
-import { PlanForm, type PlanDraft } from './components/plan-form';
-import { parseLinkText } from '../utils/link';
+import { PlanForm } from './components/plan-form';
 import { CalendarToolbar } from './components/calendar-toolbar';
 
 export type CalendarMode = 'daily' | 'weekly' | 'monthly';
@@ -30,6 +30,7 @@ export const DEFAULT_CALENDAR_VIEW: CalendarViewState = {
 export interface CalendarProps {
 	entryService:      EntryService;
 	areaService:       AreaService;
+	projectService:    ProjectService;
 	initialView:       CalendarViewState;
 	calendarStartHour: number;
 	calendarEndHour:   number;
@@ -38,7 +39,7 @@ export interface CalendarProps {
 	onRefresh:         () => void;
 }
 
-export function Calendar({ entryService, areaService, initialView, calendarStartHour, calendarEndHour, defaultArea, revision, onRefresh }: CalendarProps) {
+export function Calendar({ entryService, areaService, projectService, initialView, calendarStartHour, calendarEndHour, defaultArea, revision, onRefresh }: CalendarProps) {
 	const [viewState, setViewState] = useState<CalendarViewState>(initialView);
 	const [planForm,  setPlanForm]  = useState<{ date: string; initialStart: string } | null>(null);
 
@@ -49,6 +50,7 @@ export function Calendar({ entryService, areaService, initialView, calendarStart
 
 	const areaColors = areaService.getAreaColors();
 	const areas      = areaService.getAreas();
+	const projects   = projectService.getProjects(true);
 
 	const { startDate, endDate } = renderer.getDateRange(viewState.currentDate);
 	const entries = useMemo(
@@ -64,26 +66,7 @@ export function Calendar({ entryService, areaService, initialView, calendarStart
 		? (date: string, time: string) => setPlanForm({ date, initialStart: time })
 		: undefined;
 
-	const handleSavePlan = async (draft: PlanDraft) => {
-		if (!draft.area.trim()) return;
-		const projectLink = draft.project ? parseLinkText(draft.project) ?? undefined : undefined;
-
-		const [sh = 0, sm = 0] = draft.start.split(':').map(Number);
-		const [eh = 0, em = 0] = draft.end.split(':').map(Number);
-		const durationMins = Math.max(0, eh * 60 + em - (sh * 60 + sm));
-
-		const entry: TimeEntry = {
-			id:       DateTime.now().toFormat('yyyyMMddHHmmssSSS'),
-			start:    draft.start,
-			end:      draft.end,
-			duration: Duration.fromObject({ minutes: durationMins }),
-			task:     draft.task,
-			subTask:  draft.subTask,
-			area:     draft.area.trim(),
-			project:  projectLink,
-			type:     'planned',
-		};
-
+	const handleSavePlan = async (entry: TimeEntry) => {
 		await entryService.saveEntry(entry, planForm!.date);
 		setPlanForm(null);
 	};
@@ -106,6 +89,7 @@ export function Calendar({ entryService, areaService, initialView, calendarStart
 					initialStart={planForm.initialStart}
 					defaultArea={defaultArea}
 					areas={areas}
+					projects={projects}
 					onSave={handleSavePlan}
 					onCancel={() => setPlanForm(null)}
 				/>

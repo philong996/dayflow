@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { DateTime, Duration } from 'luxon';
 import type { TimerService } from '../services/timer-service';
 import { AreaService } from '../services/area-service';
+import { ProjectService } from '../services/project-service';
 import type { TimeEntry } from '../core/time-entry';
 import { pad, nowHHmm, fmtElapsed, fmtDuration } from '../utils/datetime';
 import { linkLabel, parseLinkText } from '../utils/link';
@@ -56,24 +57,28 @@ function EntryRow({ entry, areaColors }: { entry: TimeEntry; areaColors: Record<
 // ── TimerPanel ────────────────────────────────────────────────────────────────
 
 export interface TimerPanelProps {
-	timerService: TimerService;
-	defaultArea:  string;
-	revision:     number;
-	areaService:  AreaService;
+	timerService:    TimerService;
+	defaultArea:     string;
+	revision:        number;
+	areaService:     AreaService;
+	projectService:  ProjectService;
 }
 
-export function TimerPanel({ timerService, defaultArea, revision, areaService }: TimerPanelProps) {
+export function TimerPanel({ timerService, defaultArea, revision, areaService, projectService }: TimerPanelProps) {
 	const activeEntry = timerService.getActiveEntry();
 	const running     = timerService.isRunning();
 
 	const areas      = areaService.getAreas();
 	const areaColors = areaService.getAreaColors();
+	const projects   = projectService.getProjects(true);
 
 	const [task,        setTask]        = useState(activeEntry?.task ?? '');
 	const [subTask,     setSubTask]     = useState(activeEntry?.subTask ?? '');
 	const [description, setDescription] = useState(activeEntry?.description ?? '');
 	const [area,        setArea]        = useState(activeEntry?.area ?? defaultArea);
-	const [project,     setProject]     = useState(activeEntry?.project?.markdown() ?? '');
+	const [project,     setProject]     = useState(
+		activeEntry?.project ? linkLabel(activeEntry.project) : ''
+	);
 	const [elapsed,     setElapsed]     = useState(timerService.getElapsed());
 
 	const entries = useMemo(
@@ -101,7 +106,7 @@ export function TimerPanel({ timerService, defaultArea, revision, areaService }:
 			subTask:     subTask.trim() || undefined,
 			description: description.trim() || undefined,
 			area:        area.trim(),
-			project:     project ? (parseLinkText(project) ?? undefined) : undefined,
+			project:     project ? (parseLinkText('[[' + project + ']]') ?? undefined) : undefined,
 			type:        'tracked',
 		};
 		await timerService.start(entry);
@@ -175,13 +180,17 @@ export function TimerPanel({ timerService, defaultArea, revision, areaService }:
 							<option key={a.name} value={a.name}>{a.name}</option>
 						))}
 					</select>
-					<input
+					<select
 						value={project}
 						onChange={e => setProject(e.target.value)}
-						placeholder="Project…"
 						disabled={running}
 						className="df-timer-chip-input"
-					/>
+					>
+						<option value="">Project…</option>
+						{projects.map(p => (
+							<option key={p.path} value={p.name}>{p.name}</option>
+						))}
+					</select>
 				</div>
 
 				{/* Row 3: description */}

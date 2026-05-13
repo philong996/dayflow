@@ -2,6 +2,7 @@ import { ItemView, WorkspaceLeaf } from 'obsidian';
 import { createRoot, type Root } from 'react-dom/client';
 import type { TimerService } from '../services/timer-service';
 import { AreaService } from '../services/area-service';
+import { ProjectService } from '../services/project-service';
 import { TimerPanel } from './timer-panel';
 
 export const TIMER_PANEL_VIEW_TYPE = 'dayflow-timer';
@@ -12,9 +13,10 @@ export class TimerPanelView extends ItemView {
 
 	constructor(
 		leaf: WorkspaceLeaf,
-		private readonly timerService:   TimerService,
-		private readonly getDefaultArea: () => string,
-		private readonly areaService:    AreaService,
+		private readonly timerService:    TimerService,
+		private readonly getDefaultArea:  () => string,
+		private readonly areaService:     AreaService,
+		private readonly projectService:  ProjectService,
 	) {
 		super(leaf);
 	}
@@ -45,6 +47,7 @@ export class TimerPanelView extends ItemView {
 				defaultArea={this.getDefaultArea()}
 				revision={this.revision}
 				areaService={this.areaService}
+				projectService={this.projectService}
 			/>
 		);
 	}
