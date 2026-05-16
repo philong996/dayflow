@@ -4,9 +4,12 @@ import type { TimerService } from '../services/timer-service';
 import { AreaService } from '../services/area-service';
 import { ProjectService } from '../services/project-service';
 import type { TimeEntry } from '../core/time-entry';
+import { buildSuggestions } from '../core/suggestion';
+import type { Suggestion } from '../core/suggestion';
 import { pad, nowHHmm, fmtElapsed, fmtDuration } from '../utils/datetime';
-import { linkLabel, parseLinkText } from '../utils/link';
+import { linkLabel, parseLinkText } from '../utils/datacore';
 import { getAreaColors } from './components/time-block';
+import { AutocompleteInput } from './components/autocomplete-input';
 
 // ── EntryRow ─────────────────────────────────────────────────────────────────
 
@@ -72,6 +75,9 @@ export function TimerPanel({ timerService, defaultArea, revision, areaService, p
 	const areaColors = areaService.getAreaColors();
 	const projects   = projectService.getProjects(true);
 
+	const [suggestionRevision, setSuggestionRevision] = useState(0);
+	const suggestions = useMemo(() => buildSuggestions(projectService.getTasks(), areaService.getActivities()), [suggestionRevision]);
+
 	const [task,        setTask]        = useState(activeEntry?.task ?? '');
 	const [subTask,     setSubTask]     = useState(activeEntry?.subTask ?? '');
 	const [description, setDescription] = useState(activeEntry?.description ?? '');
@@ -83,7 +89,6 @@ export function TimerPanel({ timerService, defaultArea, revision, areaService, p
 
 	const entries = useMemo(
 		() => timerService.fetchTodayEntries(),
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[revision],
 	);
 
@@ -93,6 +98,13 @@ export function TimerPanel({ timerService, defaultArea, revision, areaService, p
 	}, [timerService]);
 
 	const totalMins = entries.reduce((s, e) => s + Math.round(e.duration.as('minutes')), 0);
+
+	const handleSelect = (s: Suggestion) => {
+		setTask(s.name);
+		setSubTask(s.subTask ?? '');
+		setArea(s.areaName ?? area);
+		setProject(s.type === 'task' ? (s.projectName ?? '') : '');
+	};
 
 	const handleStart = async () => {
 		if (!area.trim()) return;
@@ -129,18 +141,18 @@ export function TimerPanel({ timerService, defaultArea, revision, areaService, p
 				{/* Row 1: task · subtask | clock + button */}
 				<div className="df-timer-main-row">
 					<div className="df-timer-task-group">
-						<input
+						<AutocompleteInput
 							value={task}
-							onChange={e => setTask(e.target.value)}
+							onChange={setTask}
+							onSelect={handleSelect}
+							suggestions={suggestions}
 							placeholder="Task"
-							disabled={running}
 							className="df-timer-field df-timer-field--task"
 						/>
 						<input
 							value={subTask}
 							onChange={e => setSubTask(e.target.value)}
 							placeholder="Sub-task"
-							disabled={running}
 							className="df-timer-field df-timer-field--subtask"
 						/>
 					</div>
@@ -191,6 +203,12 @@ export function TimerPanel({ timerService, defaultArea, revision, areaService, p
 							<option key={p.path} value={p.name}>{p.name}</option>
 						))}
 					</select>
+					<button
+						className="df-suggestions-refresh-btn"
+						type="button"
+						onClick={() => setSuggestionRevision(r => r + 1)}
+						title="Refresh task suggestions"
+					>↻</button>
 				</div>
 
 				{/* Row 3: description */}

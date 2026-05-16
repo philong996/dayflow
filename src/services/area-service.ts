@@ -1,5 +1,7 @@
-import { DatacoreApi,  MarkdownPage } from '@blacksmithgu/datacore';
+import { DatacoreApi, MarkdownListItem, MarkdownPage } from '@blacksmithgu/datacore';
 import type { Area } from '../core/area';
+import type { Activity } from '../core/suggestion';
+import { findParentPage } from '../utils/datacore';
 
 const DEFAULT_COLOR = '#94a3b8';
 
@@ -9,7 +11,7 @@ export class AreaService {
 	getAreas(): Area[] {
 		const items = this.api.query(`
 			@page
-			and #area
+			and #type/journal/area
 			and active = true
 		`).filter((b): b is MarkdownPage => b !== null && typeof b === 'object');
 		return this.parseAreas(items);
@@ -35,5 +37,37 @@ export class AreaService {
 				const name  = item.$name.trim();
 				return name ? [{ name, color }] : [];
 			});
+	}
+
+	getActivities(): Activity[] {
+		const items = this.api.query(
+			`@list-item and #activity and active=true and childof(@page and #type/journal/area and active = true)`
+		).filter(
+			(b): b is MarkdownListItem => b !== null && typeof b === 'object'
+		);
+		return this.parseActivities(items);
+	}
+
+	parseActivities(items: MarkdownListItem[]): Activity[] {
+		const result: Activity[] = [];
+
+		for (const item of items) {
+			const r = item as unknown as Record<string, unknown>;
+
+			const rawText = (r['$text'] as string | undefined) ?? '';
+			const name = rawText
+				.replace(/#activity\S*/g, '')
+				.replace(/\[[^\]]*::[^\]]*\]/g, '')
+				.trim();
+			if (!name) continue;
+
+			const parent = findParentPage(r);
+			const areas = parent ? this.parseAreas([parent]) : [];
+			const areaName = areas[0]?.name ?? '';
+
+			result.push({ name, areaName, active: true });
+		}
+
+		return result;
 	}
 }

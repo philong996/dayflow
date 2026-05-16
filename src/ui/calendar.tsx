@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { DateTime } from 'luxon';
 import type { TimeEntry } from '../core/time-entry';
+import { buildSuggestions, type Suggestion } from '../core/suggestion';
 import { EntryService } from '../services/entry-service';
 import { AreaService } from '../services/area-service';
 import { ProjectService } from '../services/project-service';
@@ -52,6 +53,10 @@ export function Calendar({ entryService, areaService, projectService, initialVie
 	const areas      = areaService.getAreas();
 	const projects   = projectService.getProjects(true);
 
+	const [suggestionRevision, setSuggestionRevision] = useState(0);
+	const suggestions = useMemo(() => buildSuggestions(projectService.getTasks(), areaService.getActivities()), [suggestionRevision]);
+	const refreshSuggestions = useCallback(() => setSuggestionRevision(r => r + 1), []);
+
 	const { startDate, endDate } = renderer.getDateRange(viewState.currentDate);
 	const entries = useMemo(
 		() => entryService.fetchEntries(startDate, endDate, viewState.mode === 'daily' ? 'all' : 'tracked'),
@@ -90,6 +95,8 @@ export function Calendar({ entryService, areaService, projectService, initialVie
 					defaultArea={defaultArea}
 					areas={areas}
 					projects={projects}
+					suggestions={suggestions}
+					onRefreshSuggestions={refreshSuggestions}
 					onSave={handleSavePlan}
 					onCancel={() => setPlanForm(null)}
 				/>

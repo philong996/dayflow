@@ -4,15 +4,19 @@ import { DateTime, Duration } from 'luxon';
 import type { Area } from '../../core/area';
 import type { Project } from '../../core/project';
 import type { TimeEntry } from '../../core/time-entry';
-import { parseLinkText } from '../../utils/link';
+import type { Suggestion } from '../../core/suggestion';
+import { parseLinkText } from '../../utils/datacore';
+import { AutocompleteInput } from './autocomplete-input';
 
 interface PlanFormProps {
-	initialStart: string;
-	defaultArea:  string;
-	areas:        Area[];
-	projects:     Project[];
-	onSave:       (entry: TimeEntry) => void;
-	onCancel:     () => void;
+	initialStart:         string;
+	defaultArea:          string;
+	areas:                Area[];
+	projects:             Project[];
+	suggestions:          Suggestion[];
+	onRefreshSuggestions: () => void;
+	onSave:               (entry: TimeEntry) => void;
+	onCancel:             () => void;
 }
 
 
@@ -22,7 +26,7 @@ function computeDefaultEnd(start: string): string {
 	return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
-export function PlanForm({ initialStart, defaultArea, areas, projects, onSave, onCancel }: PlanFormProps) {
+export function PlanForm({ initialStart, defaultArea, areas, projects, suggestions, onRefreshSuggestions, onSave, onCancel }: PlanFormProps) {
 	const defaultEnd = computeDefaultEnd(initialStart);
 
 	const [start,   setStart]   = useState(initialStart);
@@ -31,6 +35,13 @@ export function PlanForm({ initialStart, defaultArea, areas, projects, onSave, o
 	const [subTask, setSubTask] = useState('');
 	const [area,    setArea]    = useState(defaultArea);
 	const [project, setProject] = useState('');
+
+	const handleSelect = (s: Suggestion) => {
+		setTask(s.name);
+		setSubTask(s.subTask ?? '');
+		setArea(s.areaName ?? area);
+		setProject(s.type === 'task' ? (s.projectName ?? '') : '');
+	};
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -82,16 +93,20 @@ export function PlanForm({ initialStart, defaultArea, areas, projects, onSave, o
 					</div>
 					<div className="df-plan-row">
 						<label className="df-plan-label">Task</label>
-						<input
-							className="df-plan-input"
-							type="text"
+						<AutocompleteInput
 							value={task}
-							onChange={e => setTask(e.target.value)}
+							onChange={setTask}
+							onSelect={handleSelect}
+							suggestions={suggestions}
 							placeholder="Task name"
-							// eslint-disable-next-line jsx-a11y/no-autofocus
-							autoFocus
-							required
+							className="df-plan-input"
 						/>
+						<button
+							className="df-suggestions-refresh-btn"
+							type="button"
+							onClick={onRefreshSuggestions}
+							title="Refresh task suggestions"
+						>↻</button>
 					</div>
 					<div className="df-plan-row">
 						<label className="df-plan-label">Sub-task</label>

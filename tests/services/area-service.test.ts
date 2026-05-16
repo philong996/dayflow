@@ -66,7 +66,7 @@ describe('AreaService.getAreas', () => {
 		const api = makeApi(FIXTURE_ITEMS);
 		new AreaService(api as any).getAreas();
 		expect(api.query).toHaveBeenCalledWith(expect.stringContaining('@page'));
-		expect(api.query).toHaveBeenCalledWith(expect.stringContaining('#area'));
+		expect(api.query).toHaveBeenCalledWith(expect.stringContaining('#type/journal/area'));
 		expect(api.query).toHaveBeenCalledWith(expect.stringContaining('active = true'));
 	});
 
@@ -89,5 +89,80 @@ describe('AreaService.getAreaColors', () => {
 
 	it('returns an empty map when the query returns nothing', () => {
 		expect(service([]).getAreaColors()).toEqual({});
+	});
+});
+
+// ── getActivities / parseActivities ───────────────────────────────────────────
+
+function makeAreaPage(name: string): MarkdownPage {
+	return {
+		$name:        name,
+		$path:        `Areas/${name}.md`,
+		$frontmatter: {},
+	} as unknown as MarkdownPage;
+}
+
+function makeActivityItem(
+	text: string,
+	activeVal: unknown,
+	parent: MarkdownPage,
+) {
+	return {
+		$text:     text,
+		$infields: {
+			active: { key: 'active', raw: String(activeVal), value: activeVal, position: {} },
+		},
+		$parent: parent,
+	} as unknown as import('@blacksmithgu/datacore').MarkdownListItem;
+}
+
+const AREA_PAGE = makeAreaPage('Health');
+
+describe('AreaService.parseActivities', () => {
+	it('returns [] for empty input', () => {
+		expect(new AreaService({ query: vi.fn() } as any).parseActivities([])).toEqual([]);
+	});
+
+	it('retains only items where $infields["active"].value === true', () => {
+		const svc = new AreaService({ query: vi.fn() } as any);
+		const items = [
+			makeActivityItem('Running #activity [active:: true]', true,  AREA_PAGE),
+			makeActivityItem('Yoga #activity [active:: false]',   false, AREA_PAGE),
+			makeActivityItem('Swim #activity',                    false, AREA_PAGE),
+		];
+		const result = svc.parseActivities(items);
+		expect(result).toHaveLength(1);
+		expect(result[0]?.name).toBe('Running');
+	});
+
+	it('extracts name by stripping the #activity tag', () => {
+		const svc = new AreaService({ query: vi.fn() } as any);
+		const result = svc.parseActivities([makeActivityItem('Morning run #activity', true, AREA_PAGE)]);
+		expect(result[0]?.name).toBe('Morning run');
+	});
+
+	it('extracts areaName from the parent page', () => {
+		const svc = new AreaService({ query: vi.fn() } as any);
+		const result = svc.parseActivities([makeActivityItem('Cycling #activity', true, AREA_PAGE)]);
+		expect(result[0]?.areaName).toBe('Health');
+	});
+
+	it('skips items with empty name after stripping', () => {
+		const svc = new AreaService({ query: vi.fn() } as any);
+		const result = svc.parseActivities([makeActivityItem('#activity', true, AREA_PAGE)]);
+		expect(result).toHaveLength(0);
+	});
+});
+
+describe('AreaService.getActivities', () => {
+	it('queries DataCore with #activity in the query string', () => {
+		const api = { query: vi.fn().mockReturnValue([]) };
+		new AreaService(api as any).getActivities();
+		expect(api.query).toHaveBeenCalledWith(expect.stringContaining('#activity'));
+	});
+
+	it('returns [] when DataCore returns empty', () => {
+		const api = { query: vi.fn().mockReturnValue([]) };
+		expect(new AreaService(api as any).getActivities()).toEqual([]);
 	});
 });

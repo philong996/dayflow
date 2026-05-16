@@ -213,7 +213,17 @@
 }
 
 .df-plan-row {
-    @apply flex items-center gap-2 mb-2.5;
+    @apply flex items-center gap-2 mb-2.5 relative;
+}
+
+.df-plan-row .df-autocomplete-root {
+    position: static;
+}
+
+.df-plan-row .df-autocomplete-dropdown {
+    left: 0;
+    right: 0;
+    width: auto;
 }
 
 .df-plan-label {
@@ -253,11 +263,11 @@
 /* ── Timer panel ─────────────────────────────────────────────────────────── */
 
 .df-timer-root {
-    @apply p-5 max-w-2xl text-[var(--text-normal)];
+    @apply p-5 text-[var(--text-normal)];
 }
 
 .df-timer-card {
-    @apply rounded-xl overflow-hidden mb-5 border border-[var(--background-modifier-border)] bg-[var(--background-primary)];
+    @apply rounded-xl mb-5 border border-[var(--background-modifier-border)] bg-[var(--background-primary)];
 }
 
 .df-timer-main-row {
@@ -266,7 +276,7 @@
 }
 
 .df-timer-task-group {
-    @apply flex items-center flex-1 min-w-0;
+    @apply flex items-center flex-1 min-w-0 relative;
 }
 
 .df-timer-field {
@@ -448,4 +458,63 @@
 .df-timer-empty {
     @apply text-center py-8 px-4 text-xs text-[var(--text-faint)] rounded-xl
            border border-dashed border-[var(--background-modifier-border)];
+}
+
+/* ── Suggestion refresh button ────────────────────────────────────────────── */
+
+.df-suggestions-refresh-btn {
+    @apply bg-transparent border-none text-[var(--text-muted)] cursor-pointer text-base px-1.5 py-0.5 rounded leading-none;
+}
+
+.df-suggestions-refresh-btn:hover {
+    @apply bg-[var(--background-modifier-hover)] text-[var(--text-normal)];
+}
+
+/* ── Autocomplete ─────────────────────────────────────────────────────────── */
+
+.df-autocomplete-root {
+    @apply flex-1 min-w-0 relative;
+}
+
+.df-timer-task-group .df-autocomplete-root {
+    position: static;
+}
+
+.df-autocomplete-dropdown {
+    @apply rounded-md border border-[var(--background-modifier-border)]
+           bg-[var(--background-primary)] py-1 overflow-y-auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    max-height: 520px;
+}
+
+.df-ac-row {
+    @apply flex items-start gap-2 px-2.5 py-2 cursor-pointer;
+}
+
+.df-ac-row:hover {
+    @apply bg-[var(--background-modifier-hover)];
+}
+
+.df-ac-icon {
+    @apply shrink-0 text-[var(--text-muted)] text-sm leading-5;
+}
+
+.df-ac-body {
+    @apply flex-1 min-w-0 flex flex-col;
+}
+
+.df-ac-line1 {
+    @apply flex items-baseline gap-2 min-w-0;
+}
+
+.df-ac-name {
+    @apply flex-[2] min-w-0 text-sm text-[var(--text-normal)] truncate;
+}
+
+.df-ac-subtask {
+    @apply text-[11px] text-[var(--text-muted)] truncate mt-0.5;
+}
+
+.df-ac-context {
+    @apply flex-1 min-w-0 text-[11px] text-[var(--text-faint)] truncate text-right;
 }
