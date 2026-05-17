@@ -1,9 +1,6 @@
 import { DatacoreApi, MarkdownListItem, MarkdownPage } from '@blacksmithgu/datacore';
-import type { Area } from '../core/area';
-import type { Activity } from '../core/suggestion';
-import { findParentPage } from '../utils/datacore';
-
-const DEFAULT_COLOR = '#94a3b8';
+import { Area } from '../core/area';
+import { Activity } from '../core/activity';
 
 export class AreaService {
 	constructor(private readonly api: DatacoreApi) {}
@@ -14,7 +11,13 @@ export class AreaService {
 			and #type/journal/area
 			and active = true
 		`).filter((b): b is MarkdownPage => b !== null && typeof b === 'object');
-		return this.parseAreas(items);
+		const values: Area[] = [];
+		for (const item of items) {
+			const r = Area.fromMarkdownPage(item);
+			if (!r.ok) { console.warn('AreaService:', r.error); continue; }
+			values.push(r.value);
+		}
+		return values;
 	}
 
 	getAreaColors(): Record<string, string> {
@@ -25,49 +28,18 @@ export class AreaService {
 		return map;
 	}
 
-	parseAreas(items: MarkdownPage[]): Area[] {
-		return items
-			.flatMap(item => {
-				const frontmatter = item.$frontmatter;
-				if (!frontmatter) return [];
-				const rawColor = (frontmatter['color']?.raw ?? '').trim();
-				const color = rawColor
-					? (rawColor.startsWith('#') ? rawColor : `#${rawColor}`)
-					: DEFAULT_COLOR;
-				const name  = item.$name.trim();
-				return name ? [{ name, color }] : [];
-			});
-	}
-
 	getActivities(): Activity[] {
 		const items = this.api.query(
 			`@list-item and #activity and active=true and childof(@page and #type/journal/area and active = true)`
 		).filter(
 			(b): b is MarkdownListItem => b !== null && typeof b === 'object'
 		);
-		return this.parseActivities(items);
-	}
-
-	parseActivities(items: MarkdownListItem[]): Activity[] {
-		const result: Activity[] = [];
-
+		const values: Activity[] = [];
 		for (const item of items) {
-			const r = item as unknown as Record<string, unknown>;
-
-			const rawText = (r['$text'] as string | undefined) ?? '';
-			const name = rawText
-				.replace(/#activity\S*/g, '')
-				.replace(/\[[^\]]*::[^\]]*\]/g, '')
-				.trim();
-			if (!name) continue;
-
-			const parent = findParentPage(r);
-			const areas = parent ? this.parseAreas([parent]) : [];
-			const areaName = areas[0]?.name ?? '';
-
-			result.push({ name, areaName, active: true });
+			const r = Activity.fromMarkdownListItem(item);
+			if (!r.ok) { console.warn('AreaService:', r.error); continue; }
+			values.push(r.value);
 		}
-
-		return result;
+		return values;
 	}
 }

@@ -1,18 +1,8 @@
-export interface Task {
-	name:        string;
-	status:      'todo' | 'in-progress';
-	projectName: string;
-	projectPath: string;
-	areaName:    string;
-	subtasks:    string[];
-	dueDate?:    string;
-}
+import type { Task } from './task';
+import type { Activity } from './activity';
 
-export interface Activity {
-	name:     string;
-	areaName: string;
-	active:   boolean;
-}
+export type { Task } from './task';
+export type { Activity } from './activity';
 
 export interface Suggestion {
 	name:         string;
@@ -28,6 +18,14 @@ export function buildSuggestions(tasks: Task[], activities: Activity[]): Suggest
 	const result: Suggestion[] = [];
 
 	for (const task of tasks) {
+		result.push({
+			type:        'task',
+			name:        task.name,
+			projectName: task.projectName,
+			projectPath: task.projectPath,
+			areaName:    task.areaName,
+			dueDate:     task.dueDate,
+		});
 		for (const subtaskText of task.subtasks) {
 			result.push({
 				type:        'task',

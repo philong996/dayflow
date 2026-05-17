@@ -1,12 +1,9 @@
 import { DatacoreApi, MarkdownListItem } from '@blacksmithgu/datacore';
 import { getDailyNoteSettings } from 'obsidian-daily-notes-interface';
 import { DailyNoteWriter } from '../core/daily-note-writer';
-import { EntryParser } from '../core/entry-parser';
-import type { TimeEntry } from '../core/time-entry';
+import { TimeEntry } from '../core/time-entry';
 
 export class EntryService {
-	private readonly parser = new EntryParser();
-
 	constructor(
 		private readonly api: DatacoreApi,
 		private readonly writer: DailyNoteWriter,
@@ -17,7 +14,16 @@ export class EntryService {
 		const blocks = this.api.query(query).filter(
 			(b): b is MarkdownListItem => b !== null && typeof b === 'object',
 		);
-		return this.parser.parseAllEntries(blocks);
+		const entries: TimeEntry[] = [];
+		for (const b of blocks) {
+			const r = TimeEntry.fromMarkdownListItem(b);
+			if (!r.ok) {
+				console.warn(`EntryService: failed to parse entry for block ${b.$blockId ?? '<no-id>'}`, r.error);
+				continue;
+			}
+			entries.push(r.value);
+		}
+		return entries;
 	}
 
 	async saveEntry(entry: TimeEntry, date: string): Promise<void> {
@@ -39,6 +45,4 @@ export class EntryService {
 				: '';
 		return `@list-item\n  and exists(duration)${typeClause}\n  and childof(\n      ${inner}\n  )`;
 	}
-
-
 }
