@@ -45,6 +45,7 @@ export default class DayFlowPlugin extends Plugin {
 				this.settings,
 				this.areaService,
 				this.projectService,
+				this.timerService,
 			)
 		);
 

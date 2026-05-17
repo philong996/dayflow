@@ -87,6 +87,16 @@ export function TimerPanel({ timerService, defaultArea, revision, areaService, p
 	);
 	const [elapsed,     setElapsed]     = useState(timerService.getElapsed());
 
+	useEffect(() => {
+		if (!activeEntry) return;
+		setTask(activeEntry.task);
+		setSubTask(activeEntry.subTask ?? '');
+		setDescription(activeEntry.description ?? '');
+		setArea(activeEntry.area);
+		setProject(activeEntry.project ? linkLabel(activeEntry.project) : '');
+		setElapsed(timerService.getElapsed());
+	}, [activeEntry?.id]);
+
 	const entries = useMemo(
 		() => timerService.fetchTodayEntries(),
 		[revision],

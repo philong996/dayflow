@@ -1,10 +1,12 @@
-import { useState, useMemo, useCallback } from 'react';
-import { DateTime } from 'luxon';
+import React, { useState, useMemo, useCallback } from 'react';
+import { DateTime, Duration } from 'luxon';
+import { Menu } from 'obsidian';
 import type { TimeEntry } from '../core/time-entry';
 import { buildSuggestions, type Suggestion } from '../core/suggestion';
 import { EntryService } from '../services/entry-service';
 import { AreaService } from '../services/area-service';
 import { ProjectService } from '../services/project-service';
+import { TimerService } from '../services/timer-service';
 import { CALENDAR_RENDERERS } from './calendar-renderers';
 import { PlanForm } from './components/plan-form';
 import { CalendarToolbar } from './components/calendar-toolbar';
@@ -32,6 +34,7 @@ export interface CalendarProps {
 	entryService:      EntryService;
 	areaService:       AreaService;
 	projectService:    ProjectService;
+	timerService:      TimerService;
 	initialView:       CalendarViewState;
 	calendarStartHour: number;
 	calendarEndHour:   number;
@@ -40,7 +43,7 @@ export interface CalendarProps {
 	onRefresh:         () => void;
 }
 
-export function Calendar({ entryService, areaService, projectService, initialView, calendarStartHour, calendarEndHour, defaultArea, revision, onRefresh }: CalendarProps) {
+export function Calendar({ entryService, areaService, projectService, timerService, initialView, calendarStartHour, calendarEndHour, defaultArea, revision, onRefresh }: CalendarProps) {
 	const [viewState, setViewState] = useState<CalendarViewState>(initialView);
 	const [planForm,  setPlanForm]  = useState<{ date: string; initialStart: string } | null>(null);
 
@@ -76,6 +79,36 @@ export function Calendar({ entryService, areaService, projectService, initialVie
 		setPlanForm(null);
 	};
 
+	const handleBlockContextMenu = (entry: TimeEntry, e: React.MouseEvent) => {
+		if (timerService.isRunning()) return;
+
+		const now = DateTime.now();
+		const newEntry: TimeEntry = {
+			id:          now.toFormat('yyyyMMddHHmmssSSS'),
+			type:        'tracked',
+			start:       now.toFormat('HH:mm'),
+			end:         now.toFormat('HH:mm'),
+			duration:    Duration.fromMillis(0),
+			task:        entry.task,
+			subTask:     entry.subTask,
+			description: entry.description,
+			area:        entry.area,
+			project:     entry.project,
+		};
+
+		const menu = new Menu();
+		menu.addItem(item =>
+			item
+				.setTitle(entry.type === 'tracked' ? 'Continue tracking' : 'Start timer from plan')
+				.setIcon('play')
+				.onClick(async () => {
+					await timerService.start(newEntry);
+					onRefresh();
+				})
+		);
+		menu.showAtMouseEvent(e.nativeEvent as MouseEvent);
+	};
+
 	return (
 		<div className="df-calendar">
 			<CalendarToolbar viewState={viewState} onChange={handleChange} onRefresh={onRefresh} />
@@ -83,11 +116,12 @@ export function Calendar({ entryService, areaService, projectService, initialVie
 				entries,
 				startDate,
 				endDate,
-				startHour:   calendarStartHour,
-				endHour:     calendarEndHour,
+				startHour:          calendarStartHour,
+				endHour:            calendarEndHour,
 				areaColors,
-				options:     viewState.options,
-				onSlotClick: handleSlotClick,
+				options:            viewState.options,
+				onSlotClick:        handleSlotClick,
+				onBlockContextMenu: handleBlockContextMenu,
 			})}
 			{planForm && (
 				<PlanForm

@@ -4,6 +4,7 @@ import { DEFAULT_CALENDAR_VIEW , type CalendarViewState, Calendar } from './cale
 import { EntryService } from '../services/entry-service';
 import { AreaService } from '../services/area-service';
 import { ProjectService } from '../services/project-service';
+import { TimerService } from '../services/timer-service';
 
 export const CALENDAR_VIEW_TYPE = 'dayflow-calendar';
 
@@ -17,6 +18,7 @@ export class CalendarView extends ItemView {
 		private readonly settings:        { calendarStartHour: number; calendarEndHour: number; defaultArea?: string },
 		private readonly areaService:     AreaService,
 		private readonly projectService:  ProjectService,
+		private readonly timerService:    TimerService,
 	) {
 		super(leaf);
 	}
@@ -48,6 +50,7 @@ export class CalendarView extends ItemView {
 				entryService={this.entryService}
 				areaService={this.areaService}
 				projectService={this.projectService}
+				timerService={this.timerService}
 				initialView={initialView}
 				calendarStartHour={this.settings.calendarStartHour}
 				calendarEndHour={this.settings.calendarEndHour}

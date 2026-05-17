@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { TimeEntry } from '../../core/time-entry';
 import { fmtTime, fmtDuration, toMinutes } from '../../utils/datetime';
@@ -29,14 +29,15 @@ export function getAreaColors(areaName: string | undefined, areaColors: Record<s
 // ─── TimeBlock ────────────────────────────────────────────────────────────────
 
 interface TimeBlockProps {
-	entry:        TimeEntry;
-	startHour:    number;
-	totalMinutes: number;
-	pxPerHour:    number;
-	areaColors:   Record<string, string>;
+	entry:             TimeEntry;
+	startHour:         number;
+	totalMinutes:      number;
+	pxPerHour:         number;
+	areaColors:        Record<string, string>;
+	onContextMenu?:    (entry: TimeEntry, e: React.MouseEvent) => void;
 }
 
-export function TimeBlock({ entry, startHour, totalMinutes, pxPerHour, areaColors }: TimeBlockProps) {
+export function TimeBlock({ entry, startHour, totalMinutes, pxPerHour, areaColors, onContextMenu }: TimeBlockProps) {
 	const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
 	const offsetMinutes = toMinutes(entry.start) - startHour * 60;
@@ -65,6 +66,7 @@ export function TimeBlock({ entry, startHour, totalMinutes, pxPerHour, areaColor
 				}}
 				onMouseMove={(e) => setTooltipPos({ x: e.clientX + 12, y: e.clientY + 12 })}
 				onMouseLeave={() => setTooltipPos(null)}
+				onContextMenu={onContextMenu ? (e) => { e.preventDefault(); onContextMenu(entry, e); } : undefined}
 			>
 				<span className="df-block-task">{entry.task}</span>
 				{showSubTask && <span className="df-block-subtask">{entry.subTask}</span>}

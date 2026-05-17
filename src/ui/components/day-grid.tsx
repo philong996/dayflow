@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import { DateTime, Duration } from 'luxon';
 import { TimeBlock } from './time-block';
 import type { TimeEntry } from '../../core/time-entry';
@@ -7,15 +7,16 @@ import { fmtDuration, hourLabel } from '../../utils/datetime';
 export const PX_PER_HOUR = 56;
 
 interface DayGridProps {
-	entries:      TimeEntry[];
-	startHour:    number;
-	endHour:      number;
-	currentDate:  string;
-	areaColors:   Record<string, string>;
-	onSlotClick?: (time: string) => void;
+	entries:              TimeEntry[];
+	startHour:            number;
+	endHour:              number;
+	currentDate:          string;
+	areaColors:           Record<string, string>;
+	onSlotClick?:         (time: string) => void;
+	onBlockContextMenu?:  (entry: TimeEntry, e: React.MouseEvent) => void;
 }
 
-export function DayGrid({ entries, startHour, endHour, currentDate, areaColors, onSlotClick }: DayGridProps) {
+export function DayGrid({ entries, startHour, endHour, currentDate, areaColors, onSlotClick, onBlockContextMenu }: DayGridProps) {
 	const [now, setNow] = useState(() => DateTime.now());
 
 	useEffect(() => {
@@ -103,6 +104,7 @@ export function DayGrid({ entries, startHour, endHour, currentDate, areaColors, 
 								totalMinutes={totalMinutes}
 								pxPerHour={PX_PER_HOUR}
 								areaColors={areaColors}
+								onContextMenu={onBlockContextMenu}
 							/>
 						))}
 					</div>
@@ -117,6 +119,7 @@ export function DayGrid({ entries, startHour, endHour, currentDate, areaColors, 
 									totalMinutes={totalMinutes}
 									pxPerHour={PX_PER_HOUR}
 									areaColors={areaColors}
+									onContextMenu={onBlockContextMenu}
 								/>
 							))}
 						</div>
