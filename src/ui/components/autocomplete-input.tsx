@@ -51,7 +51,7 @@ export function AutocompleteInput({
 							<div className="df-ac-body">
 								<div className="df-ac-line1">
 									<span className="df-ac-name">{s.name}</span>
-									<span className="df-ac-context">{s.projectName ?? s.areaName ?? ''}</span>
+									<span className="df-ac-context">{s.sourceName ?? s.areaName ?? ''}</span>
 								</div>
 								{s.subTask && <div className="df-ac-subtask">{s.subTask}</div>}
 							</div>

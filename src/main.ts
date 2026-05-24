@@ -5,6 +5,7 @@ import { DailyNoteWriter } from './core/daily-note-writer';
 import { EntryService } from './services/entry-service';
 import { AreaService } from './services/area-service';
 import { ProjectService } from './services/project-service';
+import { TaskService } from './services/task-service';
 import { TimerService, type TimerState } from './services/timer-service';
 import { CalendarView, CALENDAR_VIEW_TYPE } from './ui/calendar-view';
 import { TimerPanelView, TIMER_PANEL_VIEW_TYPE } from './ui/timer-panel-view';
@@ -17,6 +18,7 @@ export default class DayFlowPlugin extends Plugin {
 	entryService!:    EntryService;
 	areaService!:     AreaService;
 	projectService!:  ProjectService;
+	taskService!:     TaskService;
 	timerService!:    TimerService;
 
 	async onload() {
@@ -32,6 +34,7 @@ export default class DayFlowPlugin extends Plugin {
 		this.entryService   = new EntryService(datacoreApi, new DailyNoteWriter(this.app));
 		this.areaService    = new AreaService(datacoreApi);
 		this.projectService = new ProjectService(datacoreApi);
+		this.taskService    = new TaskService(datacoreApi);
 		this.timerService   = new TimerService(
 			()  => this.timerState,
 			async (s) => { this.timerState = s; await this.saveSettings(); },
@@ -45,6 +48,7 @@ export default class DayFlowPlugin extends Plugin {
 				this.settings,
 				this.areaService,
 				this.projectService,
+				this.taskService,
 				this.timerService,
 			)
 		);
@@ -56,6 +60,7 @@ export default class DayFlowPlugin extends Plugin {
 				() => this.settings.defaultArea ?? '',
 				this.areaService,
 				this.projectService,
+				this.taskService,
 			)
 		);
 

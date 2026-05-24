@@ -1,6 +1,5 @@
-import { DatacoreApi, MarkdownListItem, MarkdownPage } from '@blacksmithgu/datacore';
+import { DatacoreApi, MarkdownPage } from '@blacksmithgu/datacore';
 import { Area } from '../core/area';
-import { Activity } from '../core/activity';
 
 export class AreaService {
 	constructor(private readonly api: DatacoreApi) {}
@@ -26,20 +25,5 @@ export class AreaService {
 			map[name] = color;
 		}
 		return map;
-	}
-
-	getActivities(): Activity[] {
-		const items = this.api.query(
-			`@list-item and #activity and active=true and childof(@page and #type/journal/area and active = true)`
-		).filter(
-			(b): b is MarkdownListItem => b !== null && typeof b === 'object'
-		);
-		const values: Activity[] = [];
-		for (const item of items) {
-			const r = Activity.fromMarkdownListItem(item);
-			if (!r.ok) { console.warn('AreaService:', r.error); continue; }
-			values.push(r.value);
-		}
-		return values;
 	}
 }

@@ -3,6 +3,7 @@ import { DateTime, Duration } from 'luxon';
 import type { TimerService } from '../services/timer-service';
 import { AreaService } from '../services/area-service';
 import { ProjectService } from '../services/project-service';
+import { TaskService } from '../services/task-service';
 import type { TimeEntry } from '../core/time-entry';
 import { buildSuggestions } from '../core/suggestion';
 import type { Suggestion } from '../core/suggestion';
@@ -65,9 +66,10 @@ export interface TimerPanelProps {
 	revision:        number;
 	areaService:     AreaService;
 	projectService:  ProjectService;
+	taskService:     TaskService;
 }
 
-export function TimerPanel({ timerService, defaultArea, revision, areaService, projectService }: TimerPanelProps) {
+export function TimerPanel({ timerService, defaultArea, revision, areaService, projectService, taskService }: TimerPanelProps) {
 	const activeEntry = timerService.getActiveEntry();
 	const running     = timerService.isRunning();
 
@@ -76,7 +78,7 @@ export function TimerPanel({ timerService, defaultArea, revision, areaService, p
 	const projects   = projectService.getProjects(true);
 
 	const [suggestionRevision, setSuggestionRevision] = useState(0);
-	const suggestions = useMemo(() => buildSuggestions(projectService.getTasks(), areaService.getActivities()), [suggestionRevision]);
+	const suggestions = useMemo(() => buildSuggestions(taskService.getTasks()), [suggestionRevision]);
 
 	const [task,        setTask]        = useState(activeEntry?.task ?? '');
 	const [subTask,     setSubTask]     = useState(activeEntry?.subTask ?? '');
@@ -112,8 +114,9 @@ export function TimerPanel({ timerService, defaultArea, revision, areaService, p
 	const handleSelect = (s: Suggestion) => {
 		setTask(s.name);
 		setSubTask(s.subTask ?? '');
+		setDescription(s.description ?? '');
 		setArea(s.areaName ?? area);
-		setProject(s.type === 'task' ? (s.projectName ?? '') : '');
+		setProject(s.sourceName ?? '');
 	};
 
 	const handleStart = async () => {

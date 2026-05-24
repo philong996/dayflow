@@ -70,17 +70,3 @@ describe('ProjectService.getProjects', () => {
 	});
 });
 
-// ── getTasks ──────────────────────────────────────────────────────────────────
-
-describe('ProjectService.getTasks', () => {
-	it('queries DataCore with #task in the query string', () => {
-		const api = { query: vi.fn().mockReturnValue([]) };
-		new ProjectService(api as any).getTasks();
-		expect(api.query).toHaveBeenCalledWith(expect.stringContaining('#task'));
-	});
-
-	it('returns [] when DataCore returns empty', () => {
-		const api = { query: vi.fn().mockReturnValue([]) };
-		expect(new ProjectService(api as any).getTasks()).toEqual([]);
-	});
-});

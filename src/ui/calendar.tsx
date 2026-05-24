@@ -6,6 +6,7 @@ import { buildSuggestions, type Suggestion } from '../core/suggestion';
 import { EntryService } from '../services/entry-service';
 import { AreaService } from '../services/area-service';
 import { ProjectService } from '../services/project-service';
+import { TaskService } from '../services/task-service';
 import { TimerService } from '../services/timer-service';
 import { CALENDAR_RENDERERS } from './calendar-renderers';
 import { PlanForm } from './components/plan-form';
@@ -34,6 +35,7 @@ export interface CalendarProps {
 	entryService:      EntryService;
 	areaService:       AreaService;
 	projectService:    ProjectService;
+	taskService:       TaskService;
 	timerService:      TimerService;
 	initialView:       CalendarViewState;
 	calendarStartHour: number;
@@ -43,7 +45,7 @@ export interface CalendarProps {
 	onRefresh:         () => void;
 }
 
-export function Calendar({ entryService, areaService, projectService, timerService, initialView, calendarStartHour, calendarEndHour, defaultArea, revision, onRefresh }: CalendarProps) {
+export function Calendar({ entryService, areaService, projectService, taskService, timerService, initialView, calendarStartHour, calendarEndHour, defaultArea, revision, onRefresh }: CalendarProps) {
 	const [viewState, setViewState] = useState<CalendarViewState>(initialView);
 	const [planForm,  setPlanForm]  = useState<{ date: string; initialStart: string } | null>(null);
 
@@ -57,7 +59,7 @@ export function Calendar({ entryService, areaService, projectService, timerServi
 	const projects   = projectService.getProjects(true);
 
 	const [suggestionRevision, setSuggestionRevision] = useState(0);
-	const suggestions = useMemo(() => buildSuggestions(projectService.getTasks(), areaService.getActivities()), [suggestionRevision]);
+	const suggestions = useMemo(() => buildSuggestions(taskService.getTasks()), [suggestionRevision]);
 	const refreshSuggestions = useCallback(() => setSuggestionRevision(r => r + 1), []);
 
 	const { startDate, endDate } = renderer.getDateRange(viewState.currentDate);

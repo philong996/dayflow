@@ -63,17 +63,3 @@ describe('AreaService.getAreaColors', () => {
 	});
 });
 
-// ── getActivities ─────────────────────────────────────────────────────────────
-
-describe('AreaService.getActivities', () => {
-	it('queries DataCore with #activity in the query string', () => {
-		const api = { query: vi.fn().mockReturnValue([]) };
-		new AreaService(api as any).getActivities();
-		expect(api.query).toHaveBeenCalledWith(expect.stringContaining('#activity'));
-	});
-
-	it('returns [] when DataCore returns empty', () => {
-		const api = { query: vi.fn().mockReturnValue([]) };
-		expect(new AreaService(api as any).getActivities()).toEqual([]);
-	});
-});

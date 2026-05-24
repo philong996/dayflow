@@ -1,55 +1,47 @@
 import type { Task } from './task';
-import type { Activity } from './activity';
 
 export type { Task } from './task';
-export type { Activity } from './activity';
 
 export interface Suggestion {
 	name:         string;
-	type:         'task' | 'activity';
+	type:         string;
 	subTask?:     string;
-	projectName?: string;
-	projectPath?: string;
-	dueDate?:     string;
+	description?: string;
+	sourceName?:  string;
+	sourcePath?:  string;
 	areaName?:    string;
+	dueDate?:     string;
 }
 
-export function buildSuggestions(tasks: Task[], activities: Activity[]): Suggestion[] {
+export function buildSuggestions(tasks: Task[]): Suggestion[] {
 	const result: Suggestion[] = [];
 
 	for (const task of tasks) {
-		result.push({
-			type:        'task',
-			name:        task.name,
-			projectName: task.projectName,
-			projectPath: task.projectPath,
-			areaName:    task.areaName,
-			dueDate:     task.dueDate,
-		});
-		for (const subtaskText of task.subtasks) {
-			result.push({
-				type:        'task',
-				name:        task.name,
-				subTask:     subtaskText,
-				projectName: task.projectName,
-				projectPath: task.projectPath,
-				areaName:    task.areaName,
-				dueDate:     task.dueDate,
-			});
-		}
-	}
+		const base = {
+			type:       task.type,
+			name:       task.name,
+			sourceName: task.sourceName,
+			sourcePath: task.sourcePath,
+			areaName:   task.areaName,
+			dueDate:    task.dueDate,
+		};
 
-	for (const activity of activities) {
-		result.push({
-			type:     'activity',
-			name:     activity.name,
-			areaName: activity.areaName,
-		});
+		result.push(base);
+
+		for (const subtask of task.subtasks) {
+			result.push({ ...base, subTask: subtask.name });
+
+			for (const desc of subtask.descriptions) {
+				result.push({ ...base, subTask: subtask.name, description: desc.name });
+			}
+		}
 	}
 
 	return result.sort((a, b) => {
 		const nameCmp = a.name.toLowerCase().localeCompare(b.name.toLowerCase());
 		if (nameCmp !== 0) return nameCmp;
-		return (a.subTask ?? '').localeCompare(b.subTask ?? '');
+		const subCmp = (a.subTask ?? '').localeCompare(b.subTask ?? '');
+		if (subCmp !== 0) return subCmp;
+		return (a.description ?? '').localeCompare(b.description ?? '');
 	});
 }

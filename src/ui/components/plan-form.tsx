@@ -40,7 +40,7 @@ export function PlanForm({ initialStart, defaultArea, areas, projects, suggestio
 		setTask(s.name);
 		setSubTask(s.subTask ?? '');
 		setArea(s.areaName ?? area);
-		setProject(s.type === 'task' ? (s.projectName ?? '') : '');
+		setProject(s.sourceName ?? '');
 	};
 
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
