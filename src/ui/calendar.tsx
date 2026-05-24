@@ -59,7 +59,7 @@ export function Calendar({ entryService, areaService, projectService, taskServic
 	const projects   = projectService.getProjects(true);
 
 	const [suggestionRevision, setSuggestionRevision] = useState(0);
-	const suggestions = useMemo(() => buildSuggestions(taskService.getTasks()), [suggestionRevision]);
+	const suggestions = useMemo(() => buildSuggestions(taskService.getTasks([' ', '-'])), [suggestionRevision]);
 	const refreshSuggestions = useCallback(() => setSuggestionRevision(r => r + 1), []);
 
 	const { startDate, endDate } = renderer.getDateRange(viewState.currentDate);

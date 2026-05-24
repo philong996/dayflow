@@ -78,7 +78,7 @@ export function TimerPanel({ timerService, defaultArea, revision, areaService, p
 	const projects   = projectService.getProjects(true);
 
 	const [suggestionRevision, setSuggestionRevision] = useState(0);
-	const suggestions = useMemo(() => buildSuggestions(taskService.getTasks()), [suggestionRevision]);
+	const suggestions = useMemo(() => buildSuggestions(taskService.getTasks([' ', '-'])), [suggestionRevision]);
 
 	const [task,        setTask]        = useState(activeEntry?.task ?? '');
 	const [subTask,     setSubTask]     = useState(activeEntry?.subTask ?? '');

@@ -145,45 +145,4 @@ describe('buildSuggestions', () => {
 		expect(result).toHaveLength(5);
 	});
 
-	// ── sorting ─────────────────────────────────────────────────────────────────
-
-	it('result is sorted alphabetically by name (case-insensitive)', () => {
-		const tasks = [
-			makeTask({ name: 'Zebra task', subtasks: [] }),
-			makeTask({ name: 'alpha task', subtasks: [] }),
-			makeTask({ name: 'Middle task', subtasks: [] }),
-		];
-		const result = buildSuggestions(tasks);
-		expect(result.map(s => s.name)).toEqual(['alpha task', 'Middle task', 'Zebra task']);
-	});
-
-	it('entries for the same task sort: base, then subtask, then description', () => {
-		const task = makeTask({
-			name:     'Alpha',
-			subtasks: [makeSubTask({
-				name:         'Sub',
-				descriptions: [makeDesc({ name: 'Desc' })],
-			})],
-		});
-		const result = buildSuggestions([task]);
-		expect(result[0]?.name).toBe('Alpha');
-		expect(result[0]?.subTask).toBeUndefined();
-		expect(result[0]?.description).toBeUndefined();
-		expect(result[1]?.name).toBe('Alpha');
-		expect(result[1]?.subTask).toBe('Sub');
-		expect(result[1]?.description).toBeUndefined();
-		expect(result[2]?.name).toBe('Alpha');
-		expect(result[2]?.subTask).toBe('Sub');
-		expect(result[2]?.description).toBe('Desc');
-	});
-
-	it('multiple tasks are merged in the same sorted list', () => {
-		const tasks = [
-			makeTask({ name: 'Zeta', subtasks: [] }),
-			makeTask({ name: 'Alpha', type: 'activity', subtasks: [] }),
-		];
-		const result = buildSuggestions(tasks);
-		expect(result[0]?.name).toBe('Alpha');
-		expect(result[1]?.name).toBe('Zeta');
-	});
 });

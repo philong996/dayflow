@@ -13,6 +13,8 @@ export interface Suggestion {
 	dueDate?:     string;
 }
 
+const active = (status: string) => status === 'todo' || status === 'in-progress';
+
 export function buildSuggestions(tasks: Task[]): Suggestion[] {
 	const result: Suggestion[] = [];
 
@@ -26,22 +28,16 @@ export function buildSuggestions(tasks: Task[]): Suggestion[] {
 			dueDate:    task.dueDate,
 		};
 
-		result.push(base);
+		if (active(task.status)) result.push(base);
 
 		for (const subtask of task.subtasks) {
-			result.push({ ...base, subTask: subtask.name });
+			if (active(subtask.status)) result.push({ ...base, subTask: subtask.name });
 
 			for (const desc of subtask.descriptions) {
-				result.push({ ...base, subTask: subtask.name, description: desc.name });
+				if (active(desc.status)) result.push({ ...base, subTask: subtask.name, description: desc.name });
 			}
 		}
 	}
 
-	return result.sort((a, b) => {
-		const nameCmp = a.name.toLowerCase().localeCompare(b.name.toLowerCase());
-		if (nameCmp !== 0) return nameCmp;
-		const subCmp = (a.subTask ?? '').localeCompare(b.subTask ?? '');
-		if (subCmp !== 0) return subCmp;
-		return (a.description ?? '').localeCompare(b.description ?? '');
-	});
+	return result;
 }

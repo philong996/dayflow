@@ -192,7 +192,7 @@
 }
 
 .df-plan-form {
-    @apply rounded-lg border border-[var(--background-modifier-border)] bg-[var(--background-primary)] p-5 w-80;
+    @apply rounded-lg border border-[var(--background-modifier-border)] bg-[var(--background-primary)] p-5 w-96;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
 }
 
@@ -481,40 +481,67 @@
 }
 
 .df-autocomplete-dropdown {
-    @apply rounded-md border border-[var(--background-modifier-border)]
-           bg-[var(--background-primary)] py-1 overflow-y-auto;
+    @apply rounded-lg border border-[var(--background-modifier-border)]
+           bg-[var(--background-primary)] overflow-hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     max-height: 520px;
+    overflow-y: auto;
 }
 
 .df-ac-row {
-    @apply flex items-start gap-2 px-2.5 py-2 cursor-pointer;
+    @apply flex items-start gap-2 px-3 cursor-pointer min-h-[34px];
+    border-top: 0.5px solid var(--background-modifier-border);
+    transition: background 0.1s;
 }
 
-.df-ac-row:hover {
-    @apply bg-[var(--background-modifier-hover)];
+.df-ac-row:hover  { @apply bg-[var(--background-modifier-hover)]; }
+.df-ac-row.active { @apply bg-[var(--background-modifier-hover)]; }
+
+.df-ac-indent-0 { padding-left: 6px; }
+.df-ac-indent-1 { padding-left: 28px; }
+.df-ac-indent-2 { padding-left: 40px; }
+
+/* icon — colored box for task/act; plain character for sub/desc */
+.df-ac-icon-box {
+    width: 18px;
+    height: 18px;
+    margin-top: 8px;
+    @apply flex items-center justify-center shrink-0 text-[11px];
+    border-radius: 4px;
 }
 
-.df-ac-icon {
-    @apply shrink-0 text-[var(--text-muted)] text-sm leading-5;
+.df-ac-icon-sub,
+.df-ac-icon-desc { margin-top: 8px; }
+
+.df-ac-icon-task { background: #EEEDFE; color: #534AB7; }
+.df-ac-icon-act  { background: #E1F5EE; color: #0F6E56; }
+.df-ac-icon-sub  { @apply text-[12px] text-[var(--text-muted)] shrink-0; }
+.df-ac-icon-desc { @apply text-[10px] text-[var(--text-faint)] shrink-0; }
+
+.df-ac-label  { @apply flex-1 min-w-0 flex flex-col py-1.5; }
+.df-ac-name   { @apply text-[13px] text-[var(--text-normal)] truncate; }
+
+/* meta chips — hidden until hover/active, shown below the name */
+.df-ac-meta {
+    @apply flex items-center gap-1 mt-0.5;
+    opacity: 0;
+    transition: opacity 0.15s;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.15s, max-height 0.15s;
 }
 
-.df-ac-body {
-    @apply flex-1 min-w-0 flex flex-col;
+.df-ac-row:hover .df-ac-meta,
+.df-ac-row.active .df-ac-meta {
+    opacity: 1;
+    max-height: 24px;
 }
 
-.df-ac-line1 {
-    @apply flex items-baseline gap-2 min-w-0;
+.df-ac-chip { @apply text-[11px] px-1.5 py-px rounded-full whitespace-nowrap; line-height: 1.6; }
+
+.df-ac-chip-area {
+    @apply bg-[var(--background-secondary)] text-[var(--text-secondary)];
+    border: 0.5px solid var(--background-modifier-border);
 }
 
-.df-ac-name {
-    @apply flex-[2] min-w-0 text-sm text-[var(--text-normal)] truncate;
-}
-
-.df-ac-subtask {
-    @apply text-[11px] text-[var(--text-muted)] truncate mt-0.5;
-}
-
-.df-ac-context {
-    @apply flex-1 min-w-0 text-[11px] text-[var(--text-faint)] truncate text-right;
-}
+.df-ac-chip-source { background: #EEEDFE; color: #534AB7; border: 0.5px solid #CECBF6; }

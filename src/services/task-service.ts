@@ -11,7 +11,7 @@ export class TaskService {
 			const clause = statuses.map(s => `$status = "${s}"`).join(' or ');
 			query += ` and (${clause})`;
 		}
-
+		console.info('TaskService: query', query);
 		const items = this.api.query(query).filter(
 			(b): b is MarkdownTaskItem =>
 				b !== null && typeof b === 'object' && typeof (b as any)['$status'] === 'string',
