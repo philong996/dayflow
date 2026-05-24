@@ -1,75 +1,37 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { DateTime, Duration } from 'luxon';
+import { Menu } from 'obsidian';
 import type { TimerService } from '../services/timer-service';
+import { EntryService } from '../services/entry-service';
 import { AreaService } from '../services/area-service';
 import { ProjectService } from '../services/project-service';
 import { TaskService } from '../services/task-service';
 import type { TimeEntry } from '../core/time-entry';
 import { buildSuggestions } from '../core/suggestion';
 import type { Suggestion } from '../core/suggestion';
-import { pad, nowHHmm, fmtElapsed, fmtDuration } from '../utils/datetime';
+import { nowHHmm, fmtElapsed } from '../utils/datetime';
 import { linkLabel, parseLinkText } from '../utils/datacore';
-import { getAreaColors } from './components/time-block';
 import { AutocompleteInput } from './components/autocomplete-input';
-
-// ── EntryRow ─────────────────────────────────────────────────────────────────
-
-function EntryRow({ entry, areaColors }: { entry: TimeEntry; areaColors: Record<string, string> }) {
-	const [hovered, setHovered] = useState(false);
-	const mins   = Math.round(entry.duration.as('minutes'));
-	const colors = getAreaColors(entry.area, areaColors);
-
-	return (
-		<div
-			className={`df-timer-entry${hovered ? ' hovered' : ''}`}
-			onMouseEnter={() => setHovered(true)}
-			onMouseLeave={() => setHovered(false)}
-		>
-			<div className="df-timer-entry-main">
-				<div className="df-timer-entry-title">
-					<span className="df-timer-entry-task">{entry.task}</span>
-					{entry.subTask && (
-						<>
-							<span className="df-timer-entry-dot">·</span>
-							<span className="df-timer-entry-subtask">{entry.subTask}</span>
-						</>
-					)}
-				</div>
-				{entry.description && (
-					<span className="df-timer-entry-desc">{entry.description}</span>
-				)}
-			</div>
-
-			<div className="df-timer-entry-chips">
-				<span
-					className="df-timer-chip-area"
-					style={{ backgroundColor: colors.badgeBg, color: colors.badgeText }}
-				>
-					{entry.area}
-				</span>
-				{entry.project && <span className="df-timer-chip-project">{linkLabel(entry.project)}</span>}
-			</div>
-
-			<div className="df-timer-entry-right">
-				<span className="df-timer-entry-dur">{fmtDuration(mins)}</span>
-				<span className="df-timer-entry-span">{entry.start}-{entry.end}</span>
-			</div>
-		</div>
-	);
-}
+import { EntryList } from './components/entry-list';
+import { DayGrid } from './components/day-grid';
+import { PlanForm } from './components/plan-form';
 
 // ── TimerPanel ────────────────────────────────────────────────────────────────
 
 export interface TimerPanelProps {
-	timerService:    TimerService;
-	defaultArea:     string;
-	revision:        number;
-	areaService:     AreaService;
-	projectService:  ProjectService;
-	taskService:     TaskService;
+	timerService:      TimerService;
+	defaultArea:       string;
+	revision:          number;
+	areaService:       AreaService;
+	projectService:    ProjectService;
+	taskService:       TaskService;
+	entryService:      EntryService;
+	calendarStartHour: number;
+	calendarEndHour:   number;
+	onRefresh:         () => void;
 }
 
-export function TimerPanel({ timerService, defaultArea, revision, areaService, projectService, taskService }: TimerPanelProps) {
+export function TimerPanel({ timerService, defaultArea, revision, areaService, projectService, taskService, entryService, calendarStartHour, calendarEndHour, onRefresh }: TimerPanelProps) {
 	const activeEntry = timerService.getActiveEntry();
 	const running     = timerService.isRunning();
 
@@ -87,7 +49,9 @@ export function TimerPanel({ timerService, defaultArea, revision, areaService, p
 	const [project,     setProject]     = useState(
 		activeEntry?.project ? linkLabel(activeEntry.project) : ''
 	);
-	const [elapsed,     setElapsed]     = useState(timerService.getElapsed());
+	const [elapsed,  setElapsed]  = useState(timerService.getElapsed());
+	const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
+	const [planForm, setPlanForm] = useState<{ date: string; initialStart: string } | null>(null);
 
 	useEffect(() => {
 		if (!activeEntry) return;
@@ -99,8 +63,15 @@ export function TimerPanel({ timerService, defaultArea, revision, areaService, p
 		setElapsed(timerService.getElapsed());
 	}, [activeEntry?.id]);
 
-	const entries = useMemo(
-		() => timerService.fetchTodayEntries(),
+	const today = DateTime.now().toISODate()!;
+
+	const trackedEntries = useMemo(
+		() => entryService.fetchEntries(today, today, 'tracked'),
+		[revision],
+	);
+
+	const allEntries = useMemo(
+		() => entryService.fetchEntries(today, today, 'all'),
 		[revision],
 	);
 
@@ -109,7 +80,13 @@ export function TimerPanel({ timerService, defaultArea, revision, areaService, p
 		return () => clearInterval(id);
 	}, [timerService]);
 
-	const totalMins = entries.reduce((s, e) => s + Math.round(e.duration.as('minutes')), 0);
+	const calendarEntries: TimeEntry[] = activeEntry
+		? allEntries.map(e =>
+			e.id === activeEntry.id
+				? { ...e, duration: Duration.fromMillis(elapsed) }
+				: e
+		)
+		: allEntries;
 
 	const handleSelect = (s: Suggestion) => {
 		setTask(s.name);
@@ -148,106 +125,161 @@ export function TimerPanel({ timerService, defaultArea, revision, areaService, p
 		setProject('');
 	};
 
+	const handleBlockContextMenu = (entry: TimeEntry, e: React.MouseEvent) => {
+		if (timerService.isRunning()) return;
+		const menu = new Menu();
+		menu.addItem(item =>
+			item
+				.setTitle(entry.type === 'tracked' ? 'Continue tracking' : 'Start timer from plan')
+				.setIcon('play')
+				.onClick(async () => {
+					await timerService.startFromEntry(entry);
+					onRefresh();
+				})
+		);
+		menu.showAtMouseEvent(e.nativeEvent as MouseEvent);
+	};
+
+	const handleSlotClick = (time: string) => setPlanForm({ date: today, initialStart: time });
+
+	const handleSavePlan = async (entry: TimeEntry) => {
+		await entryService.saveEntry(entry, planForm!.date);
+		setPlanForm(null);
+		onRefresh();
+	};
+
 	return (
 		<div className="df-timer-root">
-			<div className="df-timer-card">
-				{/* Row 1: task · subtask | clock + button */}
-				<div className="df-timer-main-row">
-					<div className="df-timer-task-group">
-						<AutocompleteInput
-							value={task}
-							onChange={setTask}
-							onSelect={handleSelect}
-							suggestions={suggestions}
-							placeholder="Task"
-							className="df-timer-field df-timer-field--task"
-						/>
+			<div className="df-timer-body">
+				<div className="df-timer-card">
+					{/* Row 1: task | clock + button */}
+					<div className="df-timer-main-row">
+						<div className="df-timer-task-group">
+							<AutocompleteInput
+								value={task}
+								onChange={setTask}
+								onSelect={handleSelect}
+								suggestions={suggestions}
+								placeholder="Task"
+								className="df-timer-field df-timer-field--task"
+							/>
 						<input
 							value={subTask}
 							onChange={e => setSubTask(e.target.value)}
 							placeholder="Sub-task"
 							className="df-timer-field df-timer-field--subtask"
 						/>
+						</div>
+						<div className="df-timer-controls">
+							<span className={`df-timer-clock${running ? ' running' : ''}`}>
+								{fmtElapsed(elapsed)}
+							</span>
+							<button
+								className={`df-timer-run-btn${running ? ' stop' : ' start'}`}
+								onClick={running ? handleStop : handleStart}
+								type="button"
+							>
+								{running ? (
+									<><span className="df-timer-dot" />Stop</>
+								) : (
+									<>
+										<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+											<polygon points="5 3 19 12 5 21 5 3" />
+										</svg>
+										Start
+									</>
+								)}
+							</button>
+						</div>
 					</div>
-					<div className="df-timer-controls">
-						<span className={`df-timer-clock${running ? ' running' : ''}`}>
-							{fmtElapsed(elapsed)}
-						</span>
-						<button
-							className={`df-timer-run-btn${running ? ' stop' : ' start'}`}
-							onClick={running ? handleStop : handleStart}
-							type="button"
+
+					{/* Row 2: description */}
+					<div className="df-timer-desc-row">
+						<textarea
+							value={description}
+							onChange={e => setDescription(e.target.value)}
+							placeholder="Description…"
+							disabled={running}
+							className="df-timer-desc"
+						/>
+					</div>
+
+					{/* Row 3: area · project */}
+					<div className="df-timer-meta-row">
+						<select
+							value={area}
+							onChange={e => setArea(e.target.value)}
+							disabled={running}
+							className="df-timer-chip-input"
 						>
-							{running ? (
-								<><span className="df-timer-dot" />Stop</>
-							) : (
-								<>
-									<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-										<polygon points="5 3 19 12 5 21 5 3" />
-									</svg>
-									Start
-								</>
-							)}
-						</button>
+							<option value="" disabled>Area…</option>
+							{areas.map(a => (
+								<option key={a.name} value={a.name}>{a.name}</option>
+							))}
+						</select>
+						<select
+							value={project}
+							onChange={e => setProject(e.target.value)}
+							disabled={running}
+							className="df-timer-chip-input"
+						>
+							<option value="">Project…</option>
+							{projects.map(p => (
+								<option key={p.path} value={p.name}>{p.name}</option>
+							))}
+						</select>
+						<button
+							className="df-suggestions-refresh-btn"
+							type="button"
+							onClick={() => { setSuggestionRevision(r => r + 1); onRefresh(); }}
+							title="Refresh task suggestions"
+						>↻</button>
 					</div>
 				</div>
 
-				{/* Row 2: area · project */}
-				<div className="df-timer-meta-row">
-					<select
-						value={area}
-						onChange={e => setArea(e.target.value)}
-						disabled={running}
-						className="df-timer-chip-input"
-					>
-						<option value="" disabled>Area…</option>
-						{areas.map(a => (
-							<option key={a.name} value={a.name}>{a.name}</option>
-						))}
-					</select>
-					<select
-						value={project}
-						onChange={e => setProject(e.target.value)}
-						disabled={running}
-						className="df-timer-chip-input"
-					>
-						<option value="">Project…</option>
-						{projects.map(p => (
-							<option key={p.path} value={p.name}>{p.name}</option>
-						))}
-					</select>
+				{/* View toggle */}
+				<div className="df-mode-toggle">
 					<button
-						className="df-suggestions-refresh-btn"
+						className={`df-mode-btn${viewMode === 'list' ? ' active' : ''}`}
+						onClick={() => setViewMode('list')}
 						type="button"
-						onClick={() => setSuggestionRevision(r => r + 1)}
-						title="Refresh task suggestions"
-					>↻</button>
+					>List</button>
+					<button
+						className={`df-mode-btn${viewMode === 'calendar' ? ' active' : ''}`}
+						onClick={() => setViewMode('calendar')}
+						type="button"
+					>Calendar</button>
 				</div>
+			</div>
 
-				{/* Row 3: description */}
-				<div className="df-timer-desc-row">
-					<textarea
-						value={description}
-						onChange={e => setDescription(e.target.value)}
-						placeholder="Description (optional)…"
-						disabled={running}
-						className="df-timer-desc"
+			{/* Entry area */}
+			<div className="df-timer-entry-area">
+				{viewMode === 'list' ? (
+					<EntryList entries={trackedEntries} areaColors={areaColors} />
+				) : (
+					<DayGrid
+						entries={calendarEntries}
+						startHour={calendarStartHour}
+						endHour={calendarEndHour}
+						currentDate={today}
+						areaColors={areaColors}
+						onSlotClick={handleSlotClick}
+						onBlockContextMenu={handleBlockContextMenu}
 					/>
-				</div>
+				)}
 			</div>
 
-			{/* Entry list */}
-			<div className="df-timer-list-header">
-				<span className="df-timer-list-label">Today's entries</span>
-				<span className="df-timer-total-badge">
-					{Math.floor(totalMins / 60)}h {pad(totalMins % 60)}m
-				</span>
-			</div>
-
-			{entries.length === 0 ? (
-				<div className="df-timer-empty">No entries yet.</div>
-			) : (
-				entries.map(e => <EntryRow key={e.id} entry={e} areaColors={areaColors} />)
+			{planForm && (
+				<PlanForm
+					initialStart={planForm.initialStart}
+					defaultArea={defaultArea}
+					areas={areas}
+					projects={projects}
+					suggestions={suggestions}
+					onRefreshSuggestions={() => setSuggestionRevision(r => r + 1)}
+					onSave={handleSavePlan}
+					onCancel={() => setPlanForm(null)}
+				/>
 			)}
 		</div>
 	);

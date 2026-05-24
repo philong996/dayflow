@@ -11,7 +11,6 @@ export class TaskService {
 			const clause = statuses.map(s => `$status = "${s}"`).join(' or ');
 			query += ` and (${clause})`;
 		}
-		console.info('TaskService: query', query);
 		const items = this.api.query(query).filter(
 			(b): b is MarkdownTaskItem =>
 				b !== null && typeof b === 'object' && typeof (b as any)['$status'] === 'string',
@@ -19,9 +18,7 @@ export class TaskService {
 
 		const values: Task[] = [];
 		for (const item of items) {
-			const page = findParentPage(item as unknown as Record<string, unknown>);
-			if (!page) { console.warn('TaskService: task item has no parent page'); continue; }
-			const result = Task.fromMarkdownTaskItem(item, page);
+			const result = Task.fromMarkdownTaskItem(item);
 			if (!result.ok) { console.warn('TaskService:', result.error); continue; }
 			values.push(result.value);
 		}

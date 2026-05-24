@@ -263,7 +263,15 @@
 /* ── Timer panel ─────────────────────────────────────────────────────────── */
 
 .df-timer-root {
-    @apply p-5 text-[var(--text-normal)];
+    @apply flex flex-col h-full overflow-hidden text-[var(--text-normal)];
+}
+
+.df-timer-body {
+    @apply px-5 pt-5 pb-2 shrink-0;
+}
+
+.df-timer-entry-area {
+    @apply flex-1 min-h-0 flex flex-col overflow-hidden;
 }
 
 .df-timer-card {
@@ -344,7 +352,7 @@
 .df-timer-chip-input {
     @apply text-xs px-2.5 py-0.5 rounded-full border border-[var(--background-modifier-border)]
            bg-[var(--background-secondary)] text-[var(--text-muted)] outline-none;
-    width: 130px;
+    width: 250px;
 }
 
 .df-timer-chip-input:focus {

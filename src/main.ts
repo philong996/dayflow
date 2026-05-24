@@ -61,6 +61,9 @@ export default class DayFlowPlugin extends Plugin {
 				this.areaService,
 				this.projectService,
 				this.taskService,
+				this.entryService,
+				this.settings.calendarStartHour,
+				this.settings.calendarEndHour,
 			)
 		);
 

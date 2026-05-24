@@ -109,21 +109,20 @@ export function DayGrid({ entries, startHour, endHour, currentDate, areaColors, 
 						))}
 					</div>
 
-					{planned.length > 0 && (
-						<div className="df-day-column df-day-column--planned">
-							{planned.map(entry => (
-								<TimeBlock
-									key={entry.id}
-									entry={entry}
-									startHour={startHour}
-									totalMinutes={totalMinutes}
-									pxPerHour={PX_PER_HOUR}
-									areaColors={areaColors}
-									onContextMenu={onBlockContextMenu}
-								/>
-							))}
-						</div>
-					)}
+					
+					<div className="df-day-column df-day-column--planned">
+						{planned.map(entry => (
+							<TimeBlock
+								key={entry.id}
+								entry={entry}
+								startHour={startHour}
+								totalMinutes={totalMinutes}
+								pxPerHour={PX_PER_HOUR}
+								areaColors={areaColors}
+								onContextMenu={onBlockContextMenu}
+							/>
+						))}
+					</div>
 				</div>
 			</div>
 		</div>

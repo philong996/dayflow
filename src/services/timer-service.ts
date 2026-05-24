@@ -62,9 +62,21 @@ export class TimerService {
 		return state.status === 'active' ? state.entry : null;
 	}
 
-	fetchTodayEntries(): TimeEntry[] {
-		const today = DateTime.now().toISODate()!;
-		return this.entryService.fetchEntries(today, today, 'tracked');
+	async startFromEntry(source: TimeEntry): Promise<void> {
+		if (this.isRunning()) return;
+		const now = DateTime.now();
+		await this.start({
+			id:          now.toFormat('yyyyMMddHHmmssSSS'),
+			type:        'tracked',
+			start:       now.toFormat('HH:mm'),
+			end:         now.toFormat('HH:mm'),
+			duration:    Duration.fromMillis(0),
+			task:        source.task,
+			subTask:     source.subTask,
+			description: source.description,
+			area:        source.area,
+			project:     source.project,
+		});
 	}
 
 	isRunning(): boolean {

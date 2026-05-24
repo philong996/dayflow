@@ -16,6 +16,7 @@ export function isLink(val: unknown): val is Link {
 	return typeof val === 'object' && val !== null
 		&& typeof (val as Record<string, unknown>)['path'] === 'string';
 }
+
 export function findParentPage(node: Record<string, unknown>): MarkdownPage | undefined {
 	let current = node['$parent'];
 	while (current !== null && current !== undefined) {

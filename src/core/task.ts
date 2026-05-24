@@ -1,6 +1,6 @@
 import { type MarkdownTaskItem, type MarkdownPage } from '@blacksmithgu/datacore';
 import type { ParseResult } from './parse-result';
-import { isLink, linkLabel } from '../utils/datacore';
+import { findParentPage, isLink, linkLabel } from '../utils/datacore';
 
 export interface Description {
 	name:   string;
@@ -41,27 +41,27 @@ function elementText(el: unknown): string {
 	const text = (r['$cleantext'] as string | undefined)
 		?? (r['$text'] as string | undefined)
 		?? '';
-	return text.replace(/\[[^\]]*::[^\]]*\]/g, '').trim();
+	return text.replace(/#task\S*/g, '')
+		.replace(/\(due:[^)]*\)/g, '')
+		.replace(/\[[^\]]*::[^\]]*\]/g, '')
+		.trim();
 }
 
 export namespace Task {
 	export function fromMarkdownTaskItem(
-		item: MarkdownTaskItem,
-		page: MarkdownPage,
+		item: MarkdownTaskItem
 	): ParseResult<Task> {
+
+		const page = findParentPage(item as unknown as Record<string, unknown>);
+		if (!page) return { ok: false, error: 'Task: parent page not found' };
+
 		const status  = item['$status'] as string | undefined;
-		const rawText = (item['$text'] as string | undefined) ?? '';
-
-		const typeMatch = rawText.match(/#task\/(\S+)/);
-		const type      = typeMatch ? typeMatch[1]! : 'task';
-
-		const name = rawText
-			.replace(/#task\S*/g, '')
-			.replace(/\(due:[^)]*\)/g, '')
-			.replace(/\[[^\]]*::[^\]]*\]/g, '')
-			.trim();
+		const name = elementText(item);
 		if (!name)
 			return { ok: false, error: 'Task: name is empty after stripping tags' };
+
+		const typeMatch = item['$text']?.match(/#task\/(\S+)/);
+		const type      = typeMatch ? typeMatch[1]! : 'task';
 
 		const rawDue = item.$infields['due']?.value;
 		const dueDate =
@@ -69,12 +69,12 @@ export namespace Task {
 
 		const areaName = resolveArea(item, page);
 
-		const elements = (item['$elements'] as MarkdownTaskItem[] | undefined) ?? [];
+		const elements = item['$elements'];
 		const subtasks: SubTask[] = [];
 		for (const el of elements) {
 			const elName = elementText(el);
 			if (!elName) continue;
-			const subEls = ((el as any)['$elements'] as MarkdownTaskItem[] | undefined) ?? [];
+			const subEls = el['$elements'];
 			const descriptions: Description[] = [];
 			for (const desc of subEls) {
 				const descName = elementText(desc);
@@ -110,8 +110,8 @@ export namespace Task {
 		const inlineVal = item.$infields['area']?.value;
 		if (inlineVal !== undefined && inlineVal !== null) {
 			if (isLink(inlineVal)) {
-				const label = linkLabel(inlineVal);
-				if (label) return label;
+				const fileName = inlineVal.fileName();
+				if (fileName) return fileName;
 			} else if (typeof inlineVal === 'string' && inlineVal.trim()) {
 				return inlineVal.trim();
 			}

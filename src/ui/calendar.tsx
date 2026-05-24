@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { DateTime, Duration } from 'luxon';
+import { DateTime } from 'luxon';
 import { Menu } from 'obsidian';
 import type { TimeEntry } from '../core/time-entry';
 import { buildSuggestions, type Suggestion } from '../core/suggestion';
@@ -83,28 +83,13 @@ export function Calendar({ entryService, areaService, projectService, taskServic
 
 	const handleBlockContextMenu = (entry: TimeEntry, e: React.MouseEvent) => {
 		if (timerService.isRunning()) return;
-
-		const now = DateTime.now();
-		const newEntry: TimeEntry = {
-			id:          now.toFormat('yyyyMMddHHmmssSSS'),
-			type:        'tracked',
-			start:       now.toFormat('HH:mm'),
-			end:         now.toFormat('HH:mm'),
-			duration:    Duration.fromMillis(0),
-			task:        entry.task,
-			subTask:     entry.subTask,
-			description: entry.description,
-			area:        entry.area,
-			project:     entry.project,
-		};
-
 		const menu = new Menu();
 		menu.addItem(item =>
 			item
 				.setTitle(entry.type === 'tracked' ? 'Continue tracking' : 'Start timer from plan')
 				.setIcon('play')
 				.onClick(async () => {
-					await timerService.start(newEntry);
+					await timerService.startFromEntry(entry);
 					onRefresh();
 				})
 		);
